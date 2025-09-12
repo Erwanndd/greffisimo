@@ -1,13 +1,36 @@
-import React from 'react';
+import React, { useCallback } from 'react';
 import { motion } from 'framer-motion';
 import { useAuth } from '@/contexts/AuthContext';
 import { useData } from '@/contexts/DataContext';
 import { Button } from '@/components/ui/button';
 import { LogOut, User, Mail } from 'lucide-react';
+import { useNavigate } from 'react-router-dom';
+import {
+  DropdownMenu,
+  DropdownMenuTrigger,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuLabel,
+  DropdownMenuSeparator
+} from '@/components/ui/dropdown-menu';
 
 const Layout = ({ children, title }) => {
   const { user, logout } = useAuth();
   const { unreadMessagesCount } = useData();
+  const navigate = useNavigate();
+
+  const handleOpenMessages = useCallback(() => {
+    navigate('/messages');
+  }, [navigate]);
+
+  const handleGoToDashboard = useCallback(() => {
+    if (user?.role === 'formalist') navigate('/formalist');
+    else if (user?.role === 'client') navigate('/client');
+  }, [navigate, user]);
+
+  const handleGoHome = useCallback(() => {
+    navigate('/');
+  }, [navigate]);
 
   return (
     <div className="min-h-screen w-full">
@@ -20,7 +43,15 @@ const Layout = ({ children, title }) => {
         <div className="container mx-auto px-4 py-4">
           <div className="flex items-center justify-between">
             <div className="flex items-center space-x-4">
-              <div className="flex items-center space-x-2">
+              <motion.button
+                type="button"
+                onClick={handleGoHome}
+                className="flex items-center space-x-2 rounded px-1 py-0.5 hover:bg-white/10 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                initial={false}
+                whileTap={{ scale: 0.98 }}
+                aria-label="Aller à l'accueil"
+                title="Accueil"
+              >
                 <motion.div
                   initial={{ scale: 0 }}
                   animate={{ scale: 1 }}
@@ -30,7 +61,7 @@ const Layout = ({ children, title }) => {
                   <span className="text-white font-bold text-sm">G</span>
                 </motion.div>
                 <span className="text-xl font-bold gradient-text">Greffissimo</span>
-              </div>
+              </motion.button>
               {title && (
                 <motion.div
                   initial={{ opacity: 0, x: -10 }}
@@ -45,11 +76,15 @@ const Layout = ({ children, title }) => {
             </div>
 
             <div className="flex items-center space-x-4">
-               <motion.div
+              <motion.button
                 initial={{ opacity: 0 }}
                 animate={{ opacity: 1 }}
                 transition={{ delay: 0.7 }}
-                className="relative"
+                className="relative p-1 rounded hover:bg-white/10 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                onClick={handleOpenMessages}
+                aria-label="Ouvrir la messagerie"
+                title="Ouvrir la messagerie"
+                type="button"
               >
                 <Mail className="w-5 h-5 text-gray-300" />
                 {unreadMessagesCount > 0 && (
@@ -62,16 +97,36 @@ const Layout = ({ children, title }) => {
                     {unreadMessagesCount}
                   </motion.div>
                 )}
-              </motion.div>
-              <motion.div
-                initial={{ opacity: 0, x: 10 }}
-                animate={{ opacity: 1, x: 0 }}
-                transition={{ delay: 0.7 }}
-                className="flex items-center space-x-2 text-sm"
-              >
-                <User className="w-4 h-4 text-blue-400" />
-                <span className="text-white">{user?.first_name || user?.email}</span>
-              </motion.div>
+              </motion.button>
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <motion.button
+                    initial={{ opacity: 0, x: 10 }}
+                    animate={{ opacity: 1, x: 0 }}
+                    transition={{ delay: 0.7 }}
+                    className="flex items-center space-x-2 text-sm px-2 py-1 rounded hover:bg-white/10 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    aria-label="Ouvrir le menu profil"
+                    type="button"
+                  >
+                    <User className="w-4 h-4 text-blue-400" />
+                    <span className="text-white">{user?.first_name || user?.email}</span>
+                  </motion.button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent className="w-56 bg-slate-800 border-white/20 text-white">
+                  <DropdownMenuLabel className="text-gray-300">Mon compte</DropdownMenuLabel>
+                  <DropdownMenuSeparator className="bg-white/10" />
+                  <DropdownMenuItem onClick={handleGoToDashboard} className="focus:bg-white/10">
+                    Tableau de bord
+                  </DropdownMenuItem>
+                  <DropdownMenuItem onClick={handleOpenMessages} className="focus:bg-white/10">
+                    Messages
+                  </DropdownMenuItem>
+                  <DropdownMenuSeparator className="bg-white/10" />
+                  <DropdownMenuItem onClick={logout} className="text-red-300 focus:bg-white/10">
+                    <LogOut className="w-4 h-4 mr-2" /> Déconnexion
+                  </DropdownMenuItem>
+                </DropdownMenuContent>
+              </DropdownMenu>
               
               <motion.div
                 initial={{ opacity: 0, x: 10 }}

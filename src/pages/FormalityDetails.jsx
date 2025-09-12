@@ -43,7 +43,7 @@ const FormalityDetails = () => {
         className: "bg-green-500 text-white",
       });
       if (formality && formality.status === 'payment') {
-        updateFormality(formality.id, { status: 'fiscal_registration' });
+        updateFormality(formality.id, { status: 'paid' });
       }
     }
     if (query.get('payment') === 'cancel') {
@@ -155,7 +155,7 @@ const FormalityDetails = () => {
   };
 
   const getStatusProgress = (status) => {
-    const statusOrder = ['pending', 'audit', 'pieces', 'payment', 'fiscal_registration', 'parutions', 'saisie', 'validation'];
+    const statusOrder = ['pending', 'audit', 'pieces', 'payment', 'paid', 'fiscal_registration', 'parutions', 'saisie', 'validation'];
     const currentIndex = statusOrder.indexOf(status);
     return ((currentIndex + 1) / statusOrder.length) * 100;
   };

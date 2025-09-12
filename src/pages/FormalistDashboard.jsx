@@ -38,7 +38,7 @@ const FormalistDashboard = () => {
   const stats = useMemo(() => ({
     total: myFormalities.length,
     pending: myFormalities.filter(f => f.status === 'pending').length,
-    inProgress: myFormalities.filter(f => ['audit', 'pieces', 'payment', 'fiscal_registration', 'parutions', 'saisie'].includes(f.status)).length,
+    inProgress: myFormalities.filter(f => ['audit', 'pieces', 'payment', 'paid', 'fiscal_registration', 'parutions', 'saisie'].includes(f.status)).length,
     completed: myFormalities.filter(f => f.status === 'validation').length
   }), [myFormalities]);
 
@@ -56,6 +56,7 @@ const FormalistDashboard = () => {
     { value: 'audit', label: 'Audit du dossier' },
     { value: 'pieces', label: 'Collecte des pièces' },
     { value: 'payment', label: 'Paiement' },
+    { value: 'paid', label: 'Payé' },
     { value: 'fiscal_registration', label: 'Enregistrement fiscal' },
     { value: 'parutions', label: 'Parutions légales' },
     { value: 'saisie', label: 'Saisie du dossier' },

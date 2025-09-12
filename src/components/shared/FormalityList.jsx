@@ -1,14 +1,18 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { motion } from 'framer-motion';
 import { useData } from '@/contexts/DataContext';
 import { Button } from '@/components/ui/button';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Eye, Flame, Scale, MessageSquare } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
+import PaymentLinkDialog from '@/components/PaymentLinkDialog';
+import { hasPaymentLinkForFormality } from '@/services/api/paymentService';
 
 const FormalityList = ({ formalities, userRole, onStatusUpdate, children }) => {
   const { getStatusLabel, getStatusColor, unreadFormalityIds } = useData();
   const navigate = useNavigate();
+  const [showPaymentDialog, setShowPaymentDialog] = useState(false);
+  const [dialogFormality, setDialogFormality] = useState(null);
 
   const getClientNames = (clients) => {
     if (!clients || clients.length === 0) return 'Aucun client';
@@ -25,11 +29,23 @@ const FormalityList = ({ formalities, userRole, onStatusUpdate, children }) => {
     { value: 'audit', label: 'Audit du dossier' },
     { value: 'pieces', label: 'Collecte des pièces' },
     { value: 'payment', label: 'Paiement' },
+    { value: 'paid', label: 'Payé' },
     { value: 'fiscal_registration', label: 'Enregistrement fiscal' },
     { value: 'parutions', label: 'Parutions légales' },
     { value: 'saisie', label: 'Saisie du dossier' },
     { value: 'validation', label: 'Validation par le greffe' }
   ];
+
+  const handleStatusSelect = async (formality, newStatus) => {
+    console.log('[FormalityList] Requested status change', { formalityId: formality.id, newStatus });
+    if (newStatus === 'payment') {
+      // Always open the dialog; status is updated only after the email is sent
+      setDialogFormality(formality);
+      setShowPaymentDialog(true);
+      return;
+    }
+    onStatusUpdate && onStatusUpdate(formality.id, newStatus);
+  };
 
   return (
     <div className="space-y-4">
@@ -93,7 +109,7 @@ const FormalityList = ({ formalities, userRole, onStatusUpdate, children }) => {
               {onStatusUpdate && (
                 <Select
                   value={formality.status}
-                  onValueChange={(value) => onStatusUpdate(formality.id, value)}
+                  onValueChange={(value) => handleStatusSelect(formality, value)}
                 >
                   <SelectTrigger className="w-full md:w-48 bg-white/5 border-white/20 text-white hover:bg-white/10 transition-colors">
                     <SelectValue />
@@ -116,6 +132,18 @@ const FormalityList = ({ formalities, userRole, onStatusUpdate, children }) => {
         <div className="text-center py-8 text-gray-400">
           <p>Aucune formalité trouvée avec les critères sélectionnés.</p>
         </div>
+      )}
+      {showPaymentDialog && dialogFormality && (
+        <PaymentLinkDialog
+          open={showPaymentDialog}
+          onOpenChange={setShowPaymentDialog}
+          formality={dialogFormality}
+          defaultEmail={(dialogFormality.clients && dialogFormality.clients[0]?.email) || ''}
+          onEmailSent={() => {
+            console.log('[FormalityList] onEmailSent → setting status to payment', { formalityId: dialogFormality.id });
+            onStatusUpdate && onStatusUpdate(dialogFormality.id, 'payment');
+          }}
+        />
       )}
     </div>
   );

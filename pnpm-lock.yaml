@@ -65,6 +65,9 @@ importers:
       framer-motion:
         specifier: ^10.16.4
         version: 10.18.0(react-dom@18.3.1(react@18.3.1))(react@18.3.1)
+      greffissimo-app:
+        specifier: 'link:'
+        version: 'link:'
       lucide-react:
         specifier: ^0.285.0
         version: 0.285.0(react@18.3.1)

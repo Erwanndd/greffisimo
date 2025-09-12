@@ -4,16 +4,19 @@ import { Helmet } from 'react-helmet-async';
 import { DataProvider } from '@/contexts/DataContext';
 import { Toaster } from '@/components/ui/toaster';
 import LoginPage from '@/pages/LoginPage';
+import CheckoutSuccess from '@/pages/CheckoutSuccess';
+import CheckoutCancel from '@/pages/CheckoutCancel';
 // Admin dashboard removed (no administrator concept)
 import FormalistDashboard from '@/pages/FormalistDashboard';
 import ClientDashboard from '@/pages/ClientDashboard';
 import FormalityDetails from '@/pages/FormalityDetails';
+import MessagesPage from '@/pages/MessagesPage';
 import { loadStripe } from '@stripe/stripe-js';
 import { Elements } from '@stripe/react-stripe-js';
 import { Loader2 } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
 
-const stripePromise = loadStripe("YOUR_STRIPE_PUBLISHABLE_KEY");
+const stripePromise = loadStripe(import.meta.env.VITE_STRIPE_PUBLISHABLE_KEY || "");
 
 function ProtectedRoute({ children, allowedRoles }) {
   const { session, user, loading } = useAuth();
@@ -89,11 +92,20 @@ function AppRoutes() {
         </ProtectedRoute>
       } />
       
+      <Route path="/messages" element={
+        <ProtectedRoute>
+          <MessagesPage />
+        </ProtectedRoute>
+      } />
+      
       <Route path="/formality/:id" element={
         <ProtectedRoute>
           <FormalityDetails />
         </ProtectedRoute>
       } />
+      
+      <Route path="/checkout/success" element={<CheckoutSuccess />} />
+      <Route path="/checkout/cancel" element={<CheckoutCancel />} />
       
       <Route path="/" element={<Navigate to={getDashboardRoute()} replace />} />
       
