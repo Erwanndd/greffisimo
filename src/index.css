@@ -1,0 +1,79 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
+
+:root {
+  --background: 222.2 84% 4.9%;
+  --foreground: 210 40% 98%;
+  --card: 222.2 84% 4.9%;
+  --card-foreground: 210 40% 98%;
+  --popover: 222.2 84% 4.9%;
+  --popover-foreground: 210 40% 98%;
+  --primary: 217.2 91.2% 59.8%;
+  --primary-foreground: 222.2 84% 4.9%;
+  --secondary: 217.2 32.6% 17.5%;
+  --secondary-foreground: 210 40% 98%;
+  --muted: 217.2 32.6% 17.5%;
+  --muted-foreground: 215 20.2% 65.1%;
+  --accent: 217.2 32.6% 17.5%;
+  --accent-foreground: 210 40% 98%;
+  --destructive: 0 62.8% 30.6%;
+  --destructive-foreground: 210 40% 98%;
+  --border: 217.2 32.6% 17.5%;
+  --input: 217.2 32.6% 17.5%;
+  --ring: 224.3 76.3% 94.1%;
+  --radius: 0.5rem;
+}
+
+* {
+  border-color: hsl(var(--border));
+}
+
+body {
+  @apply bg-gradient-to-br from-slate-900 via-gray-900 to-indigo-950 text-white min-h-screen;
+  font-family: 'Inter', sans-serif;
+}
+
+.glass-effect {
+  @apply bg-white/10 backdrop-blur-lg border border-white/20;
+}
+
+.status-pending {
+  @apply bg-yellow-500/20 text-yellow-300 border-yellow-500/30;
+}
+
+.status-in-progress {
+  @apply bg-blue-500/20 text-blue-300 border-blue-500/30;
+}
+
+.status-completed {
+  @apply bg-green-500/20 text-green-300 border-green-500/30;
+}
+
+.status-validated {
+  @apply bg-purple-500/20 text-purple-300 border-purple-500/30;
+}
+
+.status-billed {
+  @apply bg-emerald-500/20 text-emerald-300 border-emerald-500/30;
+}
+
+.gradient-text {
+  @apply bg-gradient-to-r from-blue-400 to-purple-400 bg-clip-text text-transparent;
+}
+
+.card-hover {
+  @apply transition-all duration-300 hover:scale-[1.01] hover:shadow-xl hover:shadow-blue-500/20;
+}
+
+/* Custom focus styles for inputs and selects */
+.focus\\:border-blue-500:focus {
+  border-color: #3b82f6; /* blue-500 */
+  box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.5); /* blue-500 with opacity */
+}
+
+.focus\\:ring-blue-500:focus {
+  box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.5); /* blue-500 with opacity */
+}
