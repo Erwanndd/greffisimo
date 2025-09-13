@@ -61,9 +61,19 @@ const PaymentLinkDialog = ({ open, onOpenChange, formality, defaultEmail, onEmai
       }
       setSending(true);
       const subject = `Lien de paiement - ${formality.company_name}`;
-      const message = `Bonjour,\n\nVeuillez procéder au paiement de votre formalité via le lien suivant : ${generatedUrl}\n\nMontant: ${(amount/100).toFixed(2)} ${currency.toUpperCase()}\n\nMerci.`;
+      const message = `Bonjour,\n\nVeuillez procéder au paiement de votre formalité via le lien ci-dessous.`;
       console.log('[PaymentLinkDialog] Sending email', { to: email, sessionId: generatedSessionId });
-      await sendEmailNotification({ formality, subject, message, uploader: null, adminEmails: [email] });
+      await sendEmailNotification({
+        formality,
+        subject,
+        message,
+        uploader: null,
+        adminEmails: [email],
+        template: 'payment_link',
+        actionUrl: generatedUrl,
+        actionLabel: 'Payer maintenant',
+        meta: { amount, currency }
+      });
       toast({ title: 'Lien envoyé', description: `Le lien de paiement a été envoyé à ${email}.` });
       onEmailSent && onEmailSent({ url: generatedUrl, sessionId: generatedSessionId, email, amount, currency });
     } catch (err) {

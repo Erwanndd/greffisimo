@@ -1,6 +1,6 @@
 import { supabase } from '@/lib/customSupabaseClient';
 
-export const sendEmailNotification = async ({ formality, subject, message, uploader, adminEmails }) => {
+export const sendEmailNotification = async ({ formality, subject, message, uploader, adminEmails, template, actionUrl, actionLabel, meta }) => {
   if (!supabase) {
     console.warn("Supabase not connected. Email simulation.");
     return;
@@ -9,7 +9,7 @@ export const sendEmailNotification = async ({ formality, subject, message, uploa
   try {
     console.log('[Notification] Invoking send-email function', { subject, recipients: adminEmails, hasFormality: !!formality });
     const { error } = await supabase.functions.invoke('send-email', {
-      body: { formality, subject, message, uploader, adminEmails },
+      body: { formality, subject, message, uploader, adminEmails, template, actionUrl, actionLabel, meta },
     });
 
     if (error) throw error;
