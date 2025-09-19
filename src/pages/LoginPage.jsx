@@ -182,6 +182,10 @@ const LoginPage = () => {
             </Tabs>
           </CardContent>
         </Card>
+        <div className="mt-6 text-center text-sm text-gray-300">
+          Besoin d'aide ?
+          <a href="/faq" className="ml-1 text-blue-400 hover:text-blue-300 underline underline-offset-2">Consulter la FAQ</a>
+        </div>
       </motion.div>
     </div>
   );

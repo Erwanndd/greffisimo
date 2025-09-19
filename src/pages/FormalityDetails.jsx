@@ -26,7 +26,7 @@ const FormalityDetails = () => {
   const { toast } = useToast();
   
   const [showAddDocDialog, setShowAddDocDialog] = useState(false);
-  const [selectedFile, setSelectedFile] = useState(null);
+  const [selectedFiles, setSelectedFiles] = useState([]);
   const [documentsLoading, setDocumentsLoading] = useState(true);
 
   const formalityId = parseInt(id);
@@ -128,19 +128,26 @@ const FormalityDetails = () => {
   };
 
   const handleFileSelect = (event) => {
-    if (event.target.files && event.target.files[0]) {
-      setSelectedFile(event.target.files[0]);
-    }
+    const files = Array.from(event.target.files || []);
+    setSelectedFiles(files);
   };
 
   const handleAddDocument = async () => {
-    if (!selectedFile) {
-      toast({ title: "Erreur", description: "Veuillez sélectionner un fichier à téléverser.", variant: "destructive" });
+    if (!selectedFiles || selectedFiles.length === 0) {
+      toast({ title: "Erreur", description: "Veuillez sélectionner au moins un fichier à téléverser.", variant: "destructive" });
       return;
     }
-    await addDocumentToFormality(formality.id, selectedFile);
-    setSelectedFile(null);
-    setShowAddDocDialog(false);
+    try {
+      for (const file of selectedFiles) {
+        // Upload sequentially to avoid any storage MIME quirks under concurrency
+        // and to better surface per-file errors if they occur.
+        await addDocumentToFormality(formality.id, file);
+      }
+      toast({ title: "Téléversement terminé", description: `${selectedFiles.length} fichier(s) envoyé(s).` });
+    } finally {
+      setSelectedFiles([]);
+      setShowAddDocDialog(false);
+    }
   };
   
   const handleDownloadDocument = (document) => {
@@ -237,8 +244,8 @@ const FormalityDetails = () => {
               handleDownloadDocument={handleDownloadDocument}
               showAddDocDialog={showAddDocDialog}
               setShowAddDocDialog={setShowAddDocDialog}
-              selectedFile={selectedFile}
-              setSelectedFile={setSelectedFile}
+              selectedFiles={selectedFiles}
+              setSelectedFiles={setSelectedFiles}
             />
           </div>
 

@@ -11,7 +11,8 @@ export const addDocumentToFormalityInDB = async (formalityId, file, user) => {
         .upload(filePath, file, {
             cacheControl: '3600',
             upsert: false,
-            contentType: file.type || 'application/octet-stream',
+            // Use a safe default to avoid bucket MIME restrictions
+            contentType: 'application/octet-stream',
         });
     handleSupabaseError({ error: uploadError, customMessage: 'uploading document' });
 
@@ -21,7 +22,7 @@ export const addDocumentToFormalityInDB = async (formalityId, file, user) => {
       .update(filePath, file, {
         cacheControl: '3600',
         upsert: false,
-        contentType: file.type || 'application/octet-stream',
+        contentType: 'application/octet-stream',
         userMetadata: {
           originalName: file.name
         }

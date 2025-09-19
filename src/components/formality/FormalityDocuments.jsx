@@ -6,7 +6,7 @@ import { Label } from '@/components/ui/label';
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { FileText, Plus, Upload, Download, Loader2 } from 'lucide-react';
 
-const FormalityDocuments = ({ canUploadDocument, documents, documentsLoading, handleFileSelect, handleAddDocument, handleDownloadDocument, showAddDocDialog, setShowAddDocDialog, selectedFile, setSelectedFile }) => (
+const FormalityDocuments = ({ canUploadDocument, documents, documentsLoading, handleFileSelect, handleAddDocument, handleDownloadDocument, showAddDocDialog, setShowAddDocDialog, selectedFiles, setSelectedFiles }) => (
   <Card className="glass-effect border-white/20">
     <CardHeader>
       <div className="flex items-center justify-between">
@@ -20,25 +20,35 @@ const FormalityDocuments = ({ canUploadDocument, documents, documentsLoading, ha
             </DialogTrigger>
             <DialogContent className="glass-effect border-white/20">
               <DialogHeader>
-                <DialogTitle className="text-white">Téléverser un document</DialogTitle>
+                <DialogTitle className="text-white">Téléverser des documents</DialogTitle>
                 <DialogDescription className="text-gray-300">
-                  Sélectionnez un fichier depuis votre ordinateur pour l'ajouter au dossier.
+                  Sélectionnez un ou plusieurs fichiers depuis votre ordinateur pour les ajouter au dossier.
                 </DialogDescription>
               </DialogHeader>
               <div className="grid gap-4 py-4">
                 <div className="grid w-full max-w-sm items-center gap-1.5">
-                  <Label htmlFor="document-upload" className="text-white">Fichier</Label>
-                  <Input id="document-upload" type="file" onChange={handleFileSelect} className="text-gray-300 file:text-blue-400 hover:file:bg-blue-400/10 file:border-blue-400 file:rounded-md file:mr-4 focus:border-blue-500 focus:ring-blue-500" />
+                  <Label htmlFor="document-upload" className="text-white">Fichiers</Label>
+                  <Input id="document-upload" type="file" multiple onChange={handleFileSelect} className="text-gray-300 file:text-blue-400 hover:file:bg-blue-400/10 file:border-blue-400 file:rounded-md file:mr-4 focus:border-blue-500 focus:ring-blue-500" />
                 </div>
-                {selectedFile && (
-                  <p className="text-sm text-gray-400">Fichier sélectionné : <span className="font-medium text-white">{selectedFile.name}</span></p>
+                {selectedFiles && selectedFiles.length > 0 && (
+                  <div className="text-sm text-gray-300">
+                    <p className="mb-1">{selectedFiles.length} fichier(s) sélectionné(s) :</p>
+                    <ul className="list-disc list-inside space-y-0.5 text-gray-200 max-h-28 overflow-auto">
+                      {selectedFiles.slice(0, 10).map((f, idx) => (
+                        <li key={idx}><span className="font-medium text-white">{f.name}</span></li>
+                      ))}
+                      {selectedFiles.length > 10 && (
+                        <li className="text-gray-400">… et {selectedFiles.length - 10} autre(s)</li>
+                      )}
+                    </ul>
+                  </div>
                 )}
               </div>
               <DialogFooter>
-                <Button variant="outline" onClick={() => { setShowAddDocDialog(false); setSelectedFile(null); }} className="hover:bg-white/10 transition-colors">Annuler</Button>
+                <Button variant="outline" onClick={() => { setShowAddDocDialog(false); setSelectedFiles([]); }} className="hover:bg-white/10 transition-colors">Annuler</Button>
                 <Button onClick={handleAddDocument} className="bg-gradient-to-r from-blue-500 to-purple-500 hover:from-blue-600 hover:to-purple-600 transition-all duration-300 shadow-lg hover:shadow-xl">
                   <Upload className="w-4 h-4 mr-2" />
-                  Confirmer
+                  Confirmer l’envoi
                 </Button>
               </DialogFooter>
             </DialogContent>

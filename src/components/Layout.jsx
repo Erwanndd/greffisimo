@@ -32,6 +32,10 @@ const Layout = ({ children, title }) => {
     navigate('/');
   }, [navigate]);
 
+  const handleGoFaq = useCallback(() => {
+    navigate('/faq');
+  }, [navigate]);
+
   return (
     <div className="min-h-screen w-full">
       <motion.header 
@@ -76,6 +80,18 @@ const Layout = ({ children, title }) => {
             </div>
 
             <div className="flex items-center space-x-4">
+              <motion.button
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                transition={{ delay: 0.6 }}
+                type="button"
+                onClick={handleGoFaq}
+                className="hidden sm:inline-flex text-sm text-gray-300 hover:text-white px-2 py-1 rounded hover:bg-white/10 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                aria-label="Consulter la FAQ"
+                title="FAQ"
+              >
+                FAQ
+              </motion.button>
               <motion.button
                 initial={{ opacity: 0 }}
                 animate={{ opacity: 1 }}
