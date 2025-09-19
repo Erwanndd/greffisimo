@@ -1,22 +1,18 @@
 import React, { useState, useEffect } from 'react';
-import { ChevronRight, CheckCircle, Clock, Shield, Users, FileText, Bell, TrendingUp, ArrowRight, Menu, X, Zap, Globe, Award, BarChart3, Calendar, MessageSquare, Lock, Sparkles, Building2, Scale } from 'lucide-react';
-import { Routes, Route, Navigate, useNavigate } from 'react-router-dom';
-import { useAuth } from '@/contexts/AuthContext';
-import LoginPage from '@/pages/LoginPage';
-import FaqPage from '@/pages/FaqPage';
-import ClientDashboard from '@/pages/ClientDashboard';
-import FormalistDashboard from '@/pages/FormalistDashboard';
-import MessagesPage from '@/pages/MessagesPage';
-import FormalityDetails from '@/pages/FormalityDetails';
-import CheckoutSuccess from '@/pages/CheckoutSuccess';
-import CheckoutCancel from '@/pages/CheckoutCancel';
+import { Menu, X, ArrowRight, Shield, Clock, CheckCircle, Lock } from 'lucide-react';
 
-const HomePage = () => {
+const App = () => {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [scrolled, setScrolled] = useState(false);
-  const [activeTestimonial, setActiveTestimonial] = useState(0);
-  const navigate = useNavigate();
-  const { isAuthenticated, user } = useAuth();
+  const [cookiesVisible, setCookiesVisible] = useState(true);
+  
+  // Simulated auth state - replace with your actual auth implementation
+  const isAuthenticated = false;
+  const user = null;
+
+  const navigate = (path) => {
+    window.location.href = path;
+  };
 
   const getDashboardPath = () => {
     if (user?.role === 'formalist') return '/formalist';
@@ -30,431 +26,232 @@ const HomePage = () => {
     return () => window.removeEventListener('scroll', handleScroll);
   }, []);
 
-  useEffect(() => {
-    const timer = setInterval(() => {
-      setActiveTestimonial((prev) => (prev + 1) % 3);
-    }, 5000);
-    return () => clearInterval(timer);
-  }, []);
-
-  const stats = [
-    { value: '500+', label: 'Entreprises accompagnées', icon: Building2 },
-    { value: '24h', label: 'Délai moyen de traitement', icon: Clock },
-    { value: '99%', label: 'Taux de satisfaction', icon: Award },
-    { value: '15k+', label: 'Formalités traitées', icon: FileText }
-  ];
-
-  const features = [
-    {
-      icon: Shield,
-      title: 'Sécurité maximale',
-      description: 'Vos données sont cryptées et hébergées en France selon les normes RGPD',
-      gradient: 'from-blue-500 to-cyan-500'
-    },
-    {
-      icon: Clock,
-      title: 'Suivi en temps réel',
-      description: 'Suivez l\'avancement de vos formalités minute par minute',
-      gradient: 'from-purple-500 to-pink-500'
-    },
-    {
-      icon: Users,
-      title: 'Équipe d\'experts',
-      description: 'Des formalistes certifiés à votre service 7j/7',
-      gradient: 'from-orange-500 to-red-500'
-    },
-    {
-      icon: Zap,
-      title: 'Traitement express',
-      description: 'Vos formalités traitées en 24h chrono',
-      gradient: 'from-green-500 to-emerald-500'
-    },
-    {
-      icon: MessageSquare,
-      title: 'Chat instantané',
-      description: 'Communiquez directement avec votre formaliste dédié',
-      gradient: 'from-indigo-500 to-purple-500'
-    },
-    {
-      icon: Scale,
-      title: 'Conformité garantie',
-      description: 'Respect total des procédures légales et administratives',
-      gradient: 'from-teal-500 to-cyan-500'
-    }
-  ];
-
-  const testimonials = [
-    {
-      name: 'Marie Dubois',
-      role: 'CEO, TechStart',
-      content: 'Greffissimo a transformé notre approche des formalités juridiques. Un gain de temps considérable!',
-      avatar: '👩‍💼'
-    },
-    {
-      name: 'Pierre Martin',
-      role: 'Directeur Juridique, InnovCorp',
-      content: 'La plateforme est intuitive et l\'équipe très réactive. Je recommande vivement leurs services.',
-      avatar: '👨‍💼'
-    },
-    {
-      name: 'Sophie Laurent',
-      role: 'Fondatrice, GreenTech Solutions',
-      content: 'Un service exceptionnel qui nous a fait économiser des semaines de travail administratif.',
-      avatar: '👩‍💻'
-    }
-  ];
-
-  const pricingPlans = [
-    {
-      name: 'Starter',
-      price: '49',
-      description: 'Pour les entrepreneurs individuels',
-      features: ['1 formalité/mois', 'Suivi en temps réel', 'Support par email', 'Documents sécurisés'],
-      gradient: 'from-gray-600 to-gray-800',
-      popular: false
-    },
-    {
-      name: 'Business',
-      price: '199',
-      description: 'Pour les PME en croissance',
-      features: ['10 formalités/mois', 'Formaliste dédié', 'Support prioritaire 24/7', 'API intégration', 'Rapports personnalisés'],
-      gradient: 'from-blue-600 to-purple-600',
-      popular: true
-    },
-    {
-      name: 'Enterprise',
-      price: 'Sur mesure',
-      description: 'Solutions personnalisées',
-      features: ['Formalités illimitées', 'Équipe dédiée', 'Formation sur site', 'Intégration complète', 'SLA garanti'],
-      gradient: 'from-purple-600 to-pink-600',
-      popular: false
-    }
-  ];
-
   return (
-    <div className="min-h-screen bg-gradient-to-b from-slate-950 via-slate-900 to-indigo-950">
+    <div className="min-h-screen bg-gradient-to-b from-slate-50 to-white text-slate-900">
       {/* Navigation */}
-      <nav className={`fixed top-0 w-full z-50 transition-all duration-300 ${scrolled ? 'bg-slate-900/95 backdrop-blur-xl shadow-2xl' : 'bg-transparent'}`}>
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex justify-between items-center py-4">
-            <div className="flex items-center space-x-3">
-              <div className="w-10 h-10 bg-gradient-to-br from-blue-500 to-purple-600 rounded-xl flex items-center justify-center shadow-lg">
-                <span className="text-white font-bold text-xl">G</span>
+      <nav className={`fixed top-0 w-full z-50 transition-all duration-500 ${
+        scrolled ? 'bg-white/95 backdrop-blur-lg shadow-lg border-b border-slate-100' : 'bg-transparent'
+      }`}>
+        <div className="max-w-7xl mx-auto px-6">
+          <div className="flex justify-between items-center h-20">
+            {/* Logo */}
+            <button onClick={() => navigate('/')} className="flex items-center space-x-3 group">
+              <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-slate-800 to-slate-900 text-white flex items-center justify-center font-bold text-lg shadow-lg group-hover:shadow-xl transition-all duration-300 group-hover:scale-105">
+                G
               </div>
-              <span className="text-2xl font-bold bg-gradient-to-r from-blue-400 to-purple-400 bg-clip-text text-transparent">
+              <span className="text-2xl font-bold bg-gradient-to-r from-slate-800 to-slate-600 bg-clip-text text-transparent">
                 Greffissimo
               </span>
-            </div>
+            </button>
 
-            <div className="hidden md:flex items-center space-x-8">
-              <a href="#features" className="text-gray-300 hover:text-white transition-colors">Fonctionnalités</a>
-              <a href="#pricing" className="text-gray-300 hover:text-white transition-colors">Tarifs</a>
-              <a href="#testimonials" className="text-gray-300 hover:text-white transition-colors">Témoignages</a>
-              <a href="#contact" className="text-gray-300 hover:text-white transition-colors">Contact</a>
+            {/* Desktop links */}
+            <div className="hidden md:flex items-center space-x-10">
+              <button onClick={() => navigate('/')} className="text-slate-700 hover:text-slate-900 font-medium transition-colors duration-300 relative group">
+                Accueil
+                <span className="absolute -bottom-1 left-0 w-0 h-0.5 bg-slate-900 transition-all duration-300 group-hover:w-full"></span>
+              </button>
+              <button onClick={() => navigate('/faq')} className="text-slate-700 hover:text-slate-900 font-medium transition-colors duration-300 relative group">
+                FAQ
+                <span className="absolute -bottom-1 left-0 w-0 h-0.5 bg-slate-900 transition-all duration-300 group-hover:w-full"></span>
+              </button>
+              <a href="#contact" className="px-6 py-3 rounded-full bg-gradient-to-r from-slate-800 to-slate-900 text-white font-medium hover:shadow-xl transition-all duration-300 hover:scale-105">
+                Contactez-nous
+              </a>
               <button
                 onClick={() => navigate(isAuthenticated ? getDashboardPath() : '/auth')}
-                className="px-6 py-2.5 bg-gradient-to-r from-blue-500 to-purple-600 text-white rounded-lg hover:shadow-lg hover:shadow-purple-500/25 transition-all duration-300 font-medium"
+                className="text-sm font-medium text-slate-600 hover:text-slate-900 transition-colors duration-300"
               >
                 {isAuthenticated ? 'Tableau de bord' : 'Connexion'}
               </button>
             </div>
 
-            <button onClick={() => setIsMenuOpen(!isMenuOpen)} className="md:hidden text-white">
+            {/* Mobile */}
+            <button onClick={() => setIsMenuOpen(!isMenuOpen)} className="md:hidden p-2 rounded-lg hover:bg-slate-100 transition-colors">
               {isMenuOpen ? <X size={24} /> : <Menu size={24} />}
             </button>
           </div>
         </div>
 
         {/* Mobile Menu */}
-        {isMenuOpen && (
-          <div className="md:hidden bg-slate-900/95 backdrop-blur-xl border-t border-white/10">
-            <div className="px-4 py-6 space-y-4">
-              <a href="#features" className="block text-gray-300 hover:text-white transition-colors">Fonctionnalités</a>
-              <a href="#pricing" className="block text-gray-300 hover:text-white transition-colors">Tarifs</a>
-              <a href="#testimonials" className="block text-gray-300 hover:text-white transition-colors">Témoignages</a>
-              <a href="#contact" className="block text-gray-300 hover:text-white transition-colors">Contact</a>
-              <button onClick={() => { setIsMenuOpen(false); navigate(isAuthenticated ? getDashboardPath() : '/auth'); }} className="w-full px-6 py-2.5 bg-gradient-to-r from-blue-500 to-purple-600 text-white rounded-lg font-medium">
-                {isAuthenticated ? 'Tableau de bord' : 'Connexion'}
-              </button>
-            </div>
+        <div className={`md:hidden border-t border-slate-100 bg-white/95 backdrop-blur-lg transition-all duration-500 ${
+          isMenuOpen ? 'max-h-96 opacity-100' : 'max-h-0 opacity-0 overflow-hidden'
+        }`}>
+          <div className="px-6 py-6 space-y-4">
+            <button onClick={() => { setIsMenuOpen(false); navigate('/'); }} className="block w-full text-left font-medium text-slate-700 hover:text-slate-900 py-2">
+              Accueil
+            </button>
+            <button onClick={() => { setIsMenuOpen(false); navigate('/faq'); }} className="block w-full text-left font-medium text-slate-700 hover:text-slate-900 py-2">
+              FAQ
+            </button>
+            <a href="#contact" onClick={() => setIsMenuOpen(false)} className="block w-full text-left font-medium text-slate-700 hover:text-slate-900 py-2">
+              Contactez-nous
+            </a>
+            <button
+              onClick={() => { setIsMenuOpen(false); navigate(isAuthenticated ? getDashboardPath() : '/auth'); }}
+              className="block w-full text-left font-medium text-slate-600 hover:text-slate-900 py-2 border-t border-slate-100 pt-4"
+            >
+              {isAuthenticated ? 'Tableau de bord' : 'Connexion'}
+            </button>
           </div>
-        )}
+        </div>
       </nav>
 
-      {/* Hero Section */}
-      <section className="pt-32 pb-20 px-4">
+      {/* Hero */}
+      <header className="relative pt-32 pb-20 px-6 overflow-hidden">
+        {/* Background decoration */}
+        <div className="absolute inset-0 -z-10">
+          <div className="absolute top-20 right-0 w-96 h-96 bg-slate-200/30 rounded-full blur-3xl"></div>
+          <div className="absolute bottom-0 left-0 w-96 h-96 bg-slate-300/20 rounded-full blur-3xl"></div>
+        </div>
+        
         <div className="max-w-7xl mx-auto">
-          <div className="text-center">
-            <div className="inline-flex items-center px-4 py-2 bg-gradient-to-r from-blue-500/20 to-purple-500/20 rounded-full border border-blue-500/30 mb-8">
-              <Sparkles className="w-4 h-4 text-blue-400 mr-2" />
-              <span className="text-sm text-blue-300 font-medium">Nouveau : Intégration API disponible</span>
-            </div>
-            
-            <h1 className="text-5xl md:text-7xl font-bold text-white mb-6 leading-tight">
-              Simplifiez vos
-              <span className="block bg-gradient-to-r from-blue-400 via-purple-400 to-pink-400 bg-clip-text text-transparent">
-                formalités juridiques
-              </span>
+          <div className="max-w-4xl">
+            <h1 className="text-5xl sm:text-6xl md:text-7xl font-bold leading-tight bg-gradient-to-r from-slate-900 via-slate-700 to-slate-800 bg-clip-text text-transparent">
+              Formalités pour professionnels du droit et du chiffre
             </h1>
-            
-            <p className="text-xl text-gray-300 mb-10 max-w-3xl mx-auto leading-relaxed">
-              Greffissimo révolutionne la gestion de vos formalités d'entreprise. 
-              Suivez en temps réel, collaborez efficacement, gagnez du temps.
-            </p>
 
-            <div className="flex flex-col sm:flex-row gap-4 justify-center mb-16">
-              <button onClick={() => navigate('/auth')} className="group px-8 py-4 bg-gradient-to-r from-blue-500 to-purple-600 text-white rounded-xl hover:shadow-2xl hover:shadow-purple-500/30 transition-all duration-300 font-semibold text-lg flex items-center justify-center">
-                Commencer gratuitement
+            <div className="mt-10">
+              <a href="#contact" className="inline-flex items-center px-8 py-4 rounded-full bg-gradient-to-r from-slate-800 to-slate-900 text-white font-semibold hover:shadow-2xl transition-all duration-300 hover:scale-105 group">
+                Contactez-nous
                 <ArrowRight className="ml-2 group-hover:translate-x-1 transition-transform" size={20} />
-              </button>
-              <button onClick={() => navigate('/faq')} className="px-8 py-4 bg-white/10 backdrop-blur-sm text-white rounded-xl hover:bg-white/20 transition-all duration-300 font-semibold text-lg border border-white/20">
-                Voir la démo
-              </button>
-            </div>
-
-            {/* Stats */}
-            <div className="grid grid-cols-2 md:grid-cols-4 gap-6">
-              {stats.map((stat, index) => (
-                <div key={index} className="relative group">
-                  <div className="absolute inset-0 bg-gradient-to-r from-blue-500 to-purple-600 rounded-2xl blur-xl opacity-20 group-hover:opacity-40 transition-opacity"></div>
-                  <div className="relative bg-white/5 backdrop-blur-sm border border-white/10 rounded-2xl p-6 hover:border-white/20 transition-all">
-                    <stat.icon className="w-8 h-8 text-blue-400 mb-3 mx-auto" />
-                    <div className="text-3xl font-bold text-white mb-1">{stat.value}</div>
-                    <div className="text-sm text-gray-400">{stat.label}</div>
-                  </div>
-                </div>
-              ))}
+              </a>
             </div>
           </div>
         </div>
-      </section>
+      </header>
 
-      {/* Features Section */}
-      <section id="features" className="py-20 px-4">
+      {/* Pourquoi Greffissimo ? */}
+      <section className="px-6 py-20 relative">
         <div className="max-w-7xl mx-auto">
-          <div className="text-center mb-16">
-            <h2 className="text-4xl md:text-5xl font-bold text-white mb-4">
-              Tout ce dont vous avez besoin
+          <div className="max-w-3xl">
+            <h2 className="text-3xl md:text-4xl font-bold mb-8 bg-gradient-to-r from-slate-800 to-slate-600 bg-clip-text text-transparent">
+              Pourquoi Greffissimo ?
             </h2>
-            <p className="text-xl text-gray-300 max-w-2xl mx-auto">
-              Une plateforme complète pour gérer toutes vos formalités juridiques en toute sérénité
-            </p>
-          </div>
-
-          <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-8">
-            {features.map((feature, index) => (
-              <div key={index} className="group relative">
-                <div className={`absolute inset-0 bg-gradient-to-r ${feature.gradient} rounded-2xl blur-xl opacity-20 group-hover:opacity-40 transition-opacity`}></div>
-                <div className="relative bg-white/5 backdrop-blur-sm border border-white/10 rounded-2xl p-8 hover:border-white/20 transition-all h-full">
-                  <div className={`w-14 h-14 bg-gradient-to-r ${feature.gradient} rounded-xl flex items-center justify-center mb-6`}>
-                    <feature.icon className="w-7 h-7 text-white" />
-                  </div>
-                  <h3 className="text-xl font-semibold text-white mb-3">{feature.title}</h3>
-                  <p className="text-gray-400">{feature.description}</p>
-                </div>
-              </div>
-            ))}
-          </div>
-        </div>
-      </section>
-
-      {/* Pricing Section */}
-      <section id="pricing" className="py-20 px-4">
-        <div className="max-w-7xl mx-auto">
-          <div className="text-center mb-16">
-            <h2 className="text-4xl md:text-5xl font-bold text-white mb-4">
-              Des tarifs transparents
-            </h2>
-            <p className="text-xl text-gray-300 max-w-2xl mx-auto">
-              Choisissez l'offre qui correspond à vos besoins
-            </p>
-          </div>
-
-          <div className="grid md:grid-cols-3 gap-8">
-            {pricingPlans.map((plan, index) => (
-              <div key={index} className={`relative group ${plan.popular ? 'scale-105' : ''}`}>
-                {plan.popular && (
-                  <div className="absolute -top-4 left-1/2 transform -translate-x-1/2">
-                    <span className="px-4 py-1 bg-gradient-to-r from-blue-500 to-purple-600 text-white text-sm rounded-full font-medium">
-                      Plus populaire
-                    </span>
-                  </div>
-                )}
-                <div className={`relative bg-white/5 backdrop-blur-sm border ${plan.popular ? 'border-blue-500/50' : 'border-white/10'} rounded-2xl p-8 hover:border-white/20 transition-all h-full`}>
-                  <h3 className="text-2xl font-bold text-white mb-2">{plan.name}</h3>
-                  <p className="text-gray-400 mb-6">{plan.description}</p>
-                  <div className="mb-6">
-                    <span className="text-4xl font-bold text-white">
-                      {plan.price === 'Sur mesure' ? plan.price : `${plan.price}€`}
-                    </span>
-                    {plan.price !== 'Sur mesure' && <span className="text-gray-400">/mois</span>}
-                  </div>
-                  <ul className="space-y-3 mb-8">
-                    {plan.features.map((feature, idx) => (
-                      <li key={idx} className="flex items-start text-gray-300">
-                        <CheckCircle className="w-5 h-5 text-green-400 mr-3 mt-0.5 flex-shrink-0" />
-                        <span>{feature}</span>
-                      </li>
-                    ))}
-                  </ul>
-                  <button className={`w-full py-3 rounded-lg font-semibold transition-all ${
-                    plan.popular 
-                      ? 'bg-gradient-to-r from-blue-500 to-purple-600 text-white hover:shadow-lg hover:shadow-purple-500/25'
-                      : 'bg-white/10 text-white hover:bg-white/20 border border-white/20'
-                  }`}>
-                    {plan.price === 'Sur mesure' ? 'Nous contacter' : 'Choisir ce plan'}
-                  </button>
-                </div>
-              </div>
-            ))}
-          </div>
-        </div>
-      </section>
-
-      {/* Testimonials Section */}
-      <section id="testimonials" className="py-20 px-4">
-        <div className="max-w-4xl mx-auto">
-          <div className="text-center mb-16">
-            <h2 className="text-4xl md:text-5xl font-bold text-white mb-4">
-              Ils nous font confiance
-            </h2>
-            <p className="text-xl text-gray-300">
-              Découvrez ce que nos clients disent de nous
-            </p>
-          </div>
-
-          <div className="relative">
-            <div className="bg-white/5 backdrop-blur-sm border border-white/10 rounded-2xl p-8 md:p-12">
-              <div className="flex items-center mb-6">
-                <div className="text-4xl mr-4">{testimonials[activeTestimonial].avatar}</div>
-                <div>
-                  <h4 className="text-lg font-semibold text-white">{testimonials[activeTestimonial].name}</h4>
-                  <p className="text-gray-400">{testimonials[activeTestimonial].role}</p>
-                </div>
-              </div>
-              <p className="text-xl text-gray-300 italic">"{testimonials[activeTestimonial].content}"</p>
-              
-              <div className="flex justify-center mt-8 space-x-2">
-                {testimonials.map((_, index) => (
-                  <button
-                    key={index}
-                    onClick={() => setActiveTestimonial(index)}
-                    className={`w-2 h-2 rounded-full transition-all ${
-                      index === activeTestimonial ? 'w-8 bg-blue-500' : 'bg-white/30'
-                    }`}
-                  />
-                ))}
-              </div>
-            </div>
-          </div>
-        </div>
-      </section>
-
-      {/* CTA Section */}
-      <section className="py-20 px-4">
-        <div className="max-w-4xl mx-auto">
-          <div className="relative">
-            <div className="absolute inset-0 bg-gradient-to-r from-blue-500 to-purple-600 rounded-3xl blur-3xl opacity-30"></div>
-            <div className="relative bg-gradient-to-r from-blue-500 to-purple-600 rounded-3xl p-12 md:p-16 text-center">
-              <h2 className="text-4xl md:text-5xl font-bold text-white mb-6">
-                Prêt à simplifier vos formalités ?
-              </h2>
-              <p className="text-xl text-white/90 mb-8 max-w-2xl mx-auto">
-                Rejoignez plus de 500 entreprises qui font déjà confiance à Greffissimo pour leurs démarches juridiques.
+            <div className="space-y-6 text-lg text-slate-700 leading-relaxed">
+              <p>
+                Chez Greffissimo, nous connaissons parfaitement les contraintes des professionnels du droit et du chiffre : délais serrés,
+                exigences strictes et dossiers sans marge d'erreur.
               </p>
-              <div className="flex flex-col sm:flex-row gap-4 justify-center">
-                <button onClick={() => navigate('/auth')} className="px-8 py-4 bg-white text-blue-600 rounded-xl hover:shadow-2xl transition-all duration-300 font-semibold text-lg">
-                  Essayer gratuitement
-                </button>
-                <button onClick={() => navigate('/faq')} className="px-8 py-4 bg-white/20 backdrop-blur-sm text-white rounded-xl hover:bg-white/30 transition-all duration-300 font-semibold text-lg border border-white/30">
-                  Parler à un expert
-                </button>
-              </div>
+              <p>
+                Notre mission : vous offrir une prise en charge rapide et fiable de vos formalités, tout en vous libérant du temps
+                pour vous concentrer sur votre véritable cœur de métier.
+              </p>
             </div>
+          </div>
+        </div>
+      </section>
+
+      {/* Nos engagements */}
+      <section className="px-6 py-20 bg-gradient-to-br from-slate-50 via-white to-slate-50">
+        <div className="max-w-7xl mx-auto">
+          <h3 className="text-3xl md:text-4xl font-bold mb-12 bg-gradient-to-r from-slate-800 to-slate-600 bg-clip-text text-transparent">
+            Nos engagements
+          </h3>
+
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            {[
+              { icon: Shield, text: "Maîtrise totale des procédures et usages des greffes" },
+              { icon: CheckCircle, text: "Formalité validée" },
+              { icon: Clock, text: "Formalité urgente" },
+              { icon: Lock, text: "Formalité sécurisée" },
+              { icon: Clock, text: "Traitement en urgence des dossiers prioritaires" },
+              { icon: Shield, text: "Responsabilité civile professionnelle couvrant l'intégralité de l'intervention" }
+            ].map((item, index) => (
+              <div key={index} className="group bg-white rounded-2xl p-6 shadow-md hover:shadow-xl transition-all duration-300 hover:-translate-y-1 border border-slate-100">
+                <div className="flex items-start space-x-4">
+                  <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-slate-100 to-slate-200 flex items-center justify-center group-hover:from-slate-800 group-hover:to-slate-900 transition-all duration-300">
+                    <item.icon className="w-6 h-6 text-slate-700 group-hover:text-white transition-colors duration-300" />
+                  </div>
+                  <p className="text-slate-700 font-medium flex-1">{item.text}</p>
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      {/* CTA */}
+      <section className="px-6 py-24 relative overflow-hidden">
+        <div className="absolute inset-0 -z-10">
+          <div className="absolute top-0 left-1/2 -translate-x-1/2 w-96 h-96 bg-slate-200/30 rounded-full blur-3xl"></div>
+        </div>
+        
+        <div className="max-w-7xl mx-auto text-center">
+          <h2 className="text-3xl md:text-4xl font-bold mb-8 bg-gradient-to-r from-slate-800 to-slate-600 bg-clip-text text-transparent">
+            Prêt à lancer votre formalité ?
+          </h2>
+          <a href="#contact" className="inline-flex items-center px-8 py-4 rounded-full bg-gradient-to-r from-slate-800 to-slate-900 text-white font-semibold hover:shadow-2xl transition-all duration-300 hover:scale-105 group">
+            Contactez-nous
+            <ArrowRight className="ml-2 group-hover:translate-x-1 transition-transform" size={20} />
+          </a>
+        </div>
+      </section>
+
+      {/* Contact / Footer Top */}
+      <section id="contact" className="px-6 py-16 bg-gradient-to-b from-white to-slate-50">
+        <div className="max-w-7xl mx-auto">
+          <div className="bg-white rounded-3xl p-10 shadow-xl border border-slate-100">
+            <p className="font-bold text-xl mb-2 text-slate-800">Simplifiez vos formalités juridiques avec Greffissimo.</p>
+            <p className="font-bold text-lg text-slate-700 mb-4">Contact</p>
+            <a href="mailto:contact@greffissimo.fr" className="text-lg text-slate-600 hover:text-slate-900 underline decoration-slate-300 hover:decoration-slate-900 transition-colors duration-300">
+              contact@greffissimo.fr
+            </a>
           </div>
         </div>
       </section>
 
       {/* Footer */}
-      <footer className="border-t border-white/10 py-12 px-4">
+      <footer className="border-t border-slate-200 px-6 py-16 bg-slate-50">
         <div className="max-w-7xl mx-auto">
-          <div className="grid md:grid-cols-4 gap-8">
-            <div>
-              <div className="flex items-center space-x-3 mb-4">
-                <div className="w-10 h-10 bg-gradient-to-br from-blue-500 to-purple-600 rounded-xl flex items-center justify-center">
-                  <span className="text-white font-bold text-xl">G</span>
-                </div>
-                <span className="text-xl font-bold text-white">Greffissimo</span>
-              </div>
-              <p className="text-gray-400">
-                Votre partenaire de confiance pour toutes vos formalités juridiques.
-              </p>
-            </div>
-            
-            <div>
-              <h4 className="font-semibold text-white mb-4">Produit</h4>
-              <ul className="space-y-2">
-                <li><a href="#" className="text-gray-400 hover:text-white transition-colors">Fonctionnalités</a></li>
-                <li><a href="#" className="text-gray-400 hover:text-white transition-colors">Tarifs</a></li>
-                <li><a href="#" className="text-gray-400 hover:text-white transition-colors">API</a></li>
-                <li><a href="#" className="text-gray-400 hover:text-white transition-colors">Intégrations</a></li>
-              </ul>
-            </div>
-            
-            <div>
-              <h4 className="font-semibold text-white mb-4">Entreprise</h4>
-              <ul className="space-y-2">
-                <li><a href="#" className="text-gray-400 hover:text-white transition-colors">À propos</a></li>
-                <li><a href="#" className="text-gray-400 hover:text-white transition-colors">Blog</a></li>
-                <li><a href="#" className="text-gray-400 hover:text-white transition-colors">Carrières</a></li>
-                <li><a href="#" className="text-gray-400 hover:text-white transition-colors">Contact</a></li>
-              </ul>
-            </div>
-            
-            <div>
-              <h4 className="font-semibold text-white mb-4">Légal</h4>
-              <ul className="space-y-2">
-                <li><a href="#" className="text-gray-400 hover:text-white transition-colors">Mentions légales</a></li>
-                <li><a href="#" className="text-gray-400 hover:text-white transition-colors">CGU</a></li>
-                <li><a href="#" className="text-gray-400 hover:text-white transition-colors">Confidentialité</a></li>
-                <li><a href="#" className="text-gray-400 hover:text-white transition-colors">RGPD</a></li>
-              </ul>
-            </div>
-          </div>
-          
-          <div className="border-t border-white/10 mt-12 pt-8 text-center">
-            <p className="text-gray-400">
-              © 2025 Greffissimo. Tous droits réservés. Made with ❤️ in France
-            </p>
-          </div>
+          <h4 className="text-xl font-bold mb-6 text-slate-800">Plan du site :</h4>
+          <ul className="space-y-3">
+            {[
+              { text: "Accueil", action: () => navigate('/') },
+              { text: "FAQ", action: () => navigate('/faq') }
+            ].map((item, index) => (
+              <li key={index}>
+                <button onClick={item.action} className="text-slate-600 hover:text-slate-900 underline decoration-slate-300 hover:decoration-slate-900 transition-colors duration-300">
+                  {item.text}
+                </button>
+              </li>
+            ))}
+            <li>
+              <a href="/mentions-legales" className="text-slate-600 hover:text-slate-900 underline decoration-slate-300 hover:decoration-slate-900 transition-colors duration-300">
+                Mentions légales
+              </a>
+            </li>
+          </ul>
         </div>
       </footer>
+
+      {/* Cookie banner */}
+      {cookiesVisible && (
+        <div className="fixed inset-x-0 bottom-0 z-[60] p-4">
+          <div className="max-w-4xl mx-auto">
+            <div className="p-6 rounded-2xl bg-white shadow-2xl border border-slate-200">
+              <p className="mb-4 text-slate-700">
+                Ce site utilise des cookies pour assurer son bon fonctionnement et améliorer votre expérience.
+                En utilisant ce site, vous acceptez notre utilisation des cookies.
+              </p>
+              <div className="flex gap-3">
+                <button
+                  className="px-6 py-2.5 rounded-full bg-gradient-to-r from-slate-800 to-slate-900 text-white font-medium hover:shadow-lg transition-all duration-300"
+                  onClick={() => setCookiesVisible(false)}
+                >
+                  Accept
+                </button>
+                <button
+                  className="px-6 py-2.5 rounded-full border-2 border-slate-300 text-slate-700 font-medium hover:border-slate-900 hover:text-slate-900 transition-all duration-300"
+                  onClick={() => setCookiesVisible(false)}
+                >
+                  Decline
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
-  );
-};
-
-// Protected route wrapper for authenticated sections
-const ProtectedRoute = ({ children }) => {
-  const { isAuthenticated, loading } = useAuth();
-  if (loading) return null;
-  if (!isAuthenticated) return <Navigate to="/auth" replace />;
-  return children;
-};
-
-const App = () => {
-  return (
-    <Routes>
-      <Route path="/" element={<HomePage />} />
-      <Route path="/auth" element={<LoginPage />} />
-      <Route path="/faq" element={<FaqPage />} />
-      <Route path="/client" element={<ProtectedRoute><ClientDashboard /></ProtectedRoute>} />
-      <Route path="/formalist" element={<ProtectedRoute><FormalistDashboard /></ProtectedRoute>} />
-      <Route path="/messages" element={<ProtectedRoute><MessagesPage /></ProtectedRoute>} />
-      <Route path="/formality/:id" element={<ProtectedRoute><FormalityDetails /></ProtectedRoute>} />
-      <Route path="/checkout/success" element={<CheckoutSuccess />} />
-      <Route path="/checkout/cancel" element={<CheckoutCancel />} />
-      <Route path="*" element={<Navigate to="/" replace />} />
-    </Routes>
   );
 };
 
