@@ -47,14 +47,11 @@ export default async function handler(req: any, res: any) {
   try {
     if (event.type === 'checkout.session.completed') {
       const session = event.data.object as Stripe.Checkout.Session;
-      console.log('Session', session);
       const formalityId = Number(session.metadata?.formalityId);
       const paymentIntentId = typeof session.payment_intent === 'string'
         ? session.payment_intent
         : session.payment_intent?.id;
 
-      console.log('Formality ID', formalityId);
-      console.log('Payment Intent ID', paymentIntentId);
 
       // Update payments table
       await supabase
@@ -64,7 +61,6 @@ export default async function handler(req: any, res: any) {
 
       // Update formalities status: move straight to formalist processing
       if (!Number.isNaN(formalityId)) {
-        console.log('Updating formality status to formalist processing');
         await supabase
           .from('formalities')
           .update({ status: 'formalist_processing' })
