@@ -228,19 +228,6 @@ const HomePage = () => {
             </div>
 
             {/* Stats */}
-            <div className="mt-16 grid grid-cols-3 gap-8 max-w-2xl mx-auto">
-              {[
-                { value: "100%", label: "Sécurisé" },
-                { value: "Expert", label: "Accompagnement" }
-              ].map((stat, i) => (
-                <div key={i} className="text-center">
-                  <div className="text-2xl font-bold bg-gradient-to-r from-blue-400 to-purple-400 bg-clip-text text-transparent">
-                    {stat.value}
-                  </div>
-                  <div className="text-sm text-slate-400 mt-1">{stat.label}</div>
-                </div>
-              ))}
-            </div>
           </div>
         </div>
       </header>
