@@ -18,9 +18,9 @@ const CheckoutSuccess = () => {
   const formality = formalities.find(f => f.id === formalityId);
 
   useEffect(() => {
-    if (formality && formality.status === 'payment') {
-      // Set to paid optimistically; webhook will also enforce
-      updateFormality(formality.id, { status: 'paid' });
+    if (formality && formality.status === 'pending_payment') {
+      // Move to formalist processing optimistically; webhook will also enforce
+      updateFormality(formality.id, { status: 'formalist_processing' });
     }
   }, [formality, updateFormality]);
 
@@ -63,4 +63,3 @@ const CheckoutSuccess = () => {
 };
 
 export default CheckoutSuccess;
-

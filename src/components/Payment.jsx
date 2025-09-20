@@ -1,12 +1,10 @@
 import React from 'react';
-import { useStripe } from '@stripe/react-stripe-js';
 import { Button } from '@/components/ui/button';
 import { useToast } from '@/components/ui/use-toast';
 import { CreditCard } from 'lucide-react';
 import { createCheckoutSession } from '@/services/api/paymentService';
 
 const Payment = ({ formality }) => {
-  const stripe = useStripe();
   const { toast } = useToast();
 
   const handlePayment = async () => {

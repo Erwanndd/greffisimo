@@ -33,13 +33,17 @@ const FormalistDashboard = () => {
     const matchesType = typeFilter.length === 0 || typeFilter.includes(formality.type);
     
     return matchesSearch && matchesStatus && matchesTribunal && matchesType;
+  }).sort((a, b) => {
+    const da = a.last_updated_at ? new Date(a.last_updated_at).getTime() : 0;
+    const db = b.last_updated_at ? new Date(b.last_updated_at).getTime() : 0;
+    return db - da;
   }), [myFormalities, searchTerm, statusFilter, tribunalFilter, typeFilter]);
 
   const stats = useMemo(() => ({
     total: myFormalities.length,
-    pending: myFormalities.filter(f => f.status === 'pending').length,
-    inProgress: myFormalities.filter(f => ['audit', 'pieces', 'payment', 'paid', 'fiscal_registration', 'parutions', 'saisie'].includes(f.status)).length,
-    completed: myFormalities.filter(f => f.status === 'validation').length
+    pending: myFormalities.filter(f => f.status === 'pending_payment').length,
+    inProgress: myFormalities.filter(f => ['formalist_processing', 'greffe_processing'].includes(f.status)).length,
+    completed: myFormalities.filter(f => f.status === 'validated').length
   }), [myFormalities]);
 
 
@@ -52,15 +56,10 @@ const FormalistDashboard = () => {
   };
 
   const statusOptions = [
-    { value: 'pending', label: 'En attente' },
-    { value: 'audit', label: 'Audit du dossier' },
-    { value: 'pieces', label: 'Collecte des pièces' },
-    { value: 'payment', label: 'Paiement' },
-    { value: 'paid', label: 'Payé' },
-    { value: 'fiscal_registration', label: 'Enregistrement fiscal' },
-    { value: 'parutions', label: 'Parutions légales' },
-    { value: 'saisie', label: 'Saisie du dossier' },
-    { value: 'validation', label: 'Validation par le greffe' }
+    { value: 'pending_payment', label: 'En attente de paiement' },
+    { value: 'formalist_processing', label: 'Traitement par le formaliste' },
+    { value: 'greffe_processing', label: 'Traitement par le greffe' },
+    { value: 'validated', label: 'Dossier validé' }
   ];
 
   const tribunalOptions = tribunals.map(tribunal => ({

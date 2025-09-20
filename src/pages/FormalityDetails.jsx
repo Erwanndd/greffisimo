@@ -9,6 +9,7 @@ import { Button } from '@/components/ui/button';
 import { useToast } from '@/components/ui/use-toast';
 import { ArrowLeft, Edit, CreditCard, Loader2 } from 'lucide-react';
 import Payment from '@/components/Payment';
+import PaymentLinkDialog from '@/components/PaymentLinkDialog';
 import FormalityHeader from '@/components/formality/FormalityHeader';
 import FormalityProgress from '@/components/formality/FormalityProgress';
 import FormalityInfo from '@/components/formality/FormalityInfo';
@@ -16,18 +17,20 @@ import FormalityStatusUpdate from '@/components/formality/FormalityStatusUpdate'
 import FormalityDocuments from '@/components/formality/FormalityDocuments';
 import FormalityHistory from '@/components/formality/FormalityHistory';
 import FormalityChat from '@/components/formality/FormalityChat';
+import FormalityClientsEditor from '@/components/formality/FormalityClientsEditor';
 
 const FormalityDetails = () => {
   const { id } = useParams();
   const navigate = useNavigate();
   const location = useLocation();
-  const { formalities, history, tribunals, documents, updateFormality, addDocumentToFormality, fetchDocumentsForFormality, getStatusLabel, getStatusColor } = useData();
+  const { formalities, users, history, tribunals, documents, updateFormality, addDocumentToFormality, deleteDocumentFromFormality, addClientsToFormality, removeClientFromFormality, fetchDocumentsForFormality, getStatusLabel, getStatusColor } = useData();
   const { user } = useAuth();
   const { toast } = useToast();
   
   const [showAddDocDialog, setShowAddDocDialog] = useState(false);
   const [selectedFiles, setSelectedFiles] = useState([]);
   const [documentsLoading, setDocumentsLoading] = useState(true);
+  const [showPaymentDialog, setShowPaymentDialog] = useState(false);
 
   const formalityId = parseInt(id);
   const formality = formalities.find(f => f.id === formalityId);
@@ -39,11 +42,11 @@ const FormalityDetails = () => {
     if (query.get('payment') === 'success') {
       toast({
         title: "Paiement réussi !",
-        description: "Votre paiement a été traité avec succès. La formalité va maintenant continuer son cours.",
+        description: "Votre paiement a été traité avec succès. La formalité passe en traitement par le formaliste.",
         className: "bg-green-500 text-white",
       });
-      if (formality && formality.status === 'payment') {
-        updateFormality(formality.id, { status: 'paid' });
+      if (formality && formality.status === 'pending_payment') {
+        updateFormality(formality.id, { status: 'formalist_processing' });
       }
     }
     if (query.get('payment') === 'cancel') {
@@ -92,6 +95,8 @@ const FormalityDetails = () => {
   const canUploadDocument = user.role === 'admin' || 
                             (user.role === 'formalist' && formality.formalist_id === user.id) ||
                             (user.role === 'client' && isUserClientOfFormality);
+
+  const canManageClients = user.role === 'client' && isUserClientOfFormality;
 
   if (!canView) {
     return (
@@ -161,10 +166,14 @@ const FormalityDetails = () => {
     }
   };
 
+  const handleDeleteDocument = async (document) => {
+    await deleteDocumentFromFormality(formality.id, document);
+  };
+
   const getStatusProgress = (status) => {
-    const statusOrder = ['pending', 'audit', 'pieces', 'payment', 'paid', 'fiscal_registration', 'parutions', 'saisie', 'validation'];
+    const statusOrder = ['pending_payment', 'formalist_processing', 'greffe_processing', 'validated'];
     const currentIndex = statusOrder.indexOf(status);
-    return ((currentIndex + 1) / statusOrder.length) * 100;
+    return currentIndex >= 0 ? ((currentIndex + 1) / statusOrder.length) * 100 : 0;
   };
   
   const getRoleLabel = (role) => {
@@ -203,7 +212,7 @@ const FormalityDetails = () => {
               <CardContent className="space-y-6">
                 <FormalityProgress formality={formality} getStatusProgress={getStatusProgress} />
                 
-                {formality.status === 'payment' && user.role === 'client' && (
+                {formality.status === 'pending_payment' && user.role === 'client' && (
                   <Card className="bg-blue-900/30 border-blue-500">
                     <CardHeader>
                       <CardTitle className="text-white flex items-center">
@@ -214,13 +223,35 @@ const FormalityDetails = () => {
                         Votre formalité est prête pour le paiement. Veuillez procéder pour continuer le traitement de votre dossier.
                       </CardDescription>
                     </CardHeader>
-                    <CardContent>
+                    <CardContent className="space-y-3">
                       <Payment formality={formality} />
+                      <Button variant="outline" onClick={() => setShowPaymentDialog(true)} className="border-blue-400 text-blue-300 hover:bg-blue-900/40">
+                        Envoyer le lien de paiement par email
+                      </Button>
+                      <PaymentLinkDialog
+                        open={showPaymentDialog}
+                        onOpenChange={setShowPaymentDialog}
+                        formality={formality}
+                        defaultEmail={(formality.clients && formality.clients[0]?.email) || ''}
+                        onEmailSent={() => {
+                          setShowPaymentDialog(false);
+                        }}
+                      />
                     </CardContent>
                   </Card>
                 )}
 
                 <FormalityInfo formality={formality} user={user} formalist={formalist} />
+
+                {canManageClients && (
+                  <FormalityClientsEditor
+                    formality={formality}
+                    user={user}
+                    allUsers={users}
+                    onAddClients={(ids) => addClientsToFormality(formality.id, ids)}
+                    onRemoveClient={(idToRemove) => removeClientFromFormality(formality.id, idToRemove)}
+                  />
+                )}
                 <FormalityStatusUpdate 
                   formality={formality} 
                   canEdit={canEdit} 
@@ -242,6 +273,7 @@ const FormalityDetails = () => {
               handleFileSelect={handleFileSelect}
               handleAddDocument={handleAddDocument}
               handleDownloadDocument={handleDownloadDocument}
+              handleDeleteDocument={handleDeleteDocument}
               showAddDocDialog={showAddDocDialog}
               setShowAddDocDialog={setShowAddDocDialog}
               selectedFiles={selectedFiles}

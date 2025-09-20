@@ -4,9 +4,9 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
-import { FileText, Plus, Upload, Download, Loader2 } from 'lucide-react';
+import { FileText, Plus, Upload, Download, Loader2, Trash2 } from 'lucide-react';
 
-const FormalityDocuments = ({ canUploadDocument, documents, documentsLoading, handleFileSelect, handleAddDocument, handleDownloadDocument, showAddDocDialog, setShowAddDocDialog, selectedFiles, setSelectedFiles }) => (
+const FormalityDocuments = ({ canUploadDocument, documents, documentsLoading, handleFileSelect, handleAddDocument, handleDownloadDocument, handleDeleteDocument, showAddDocDialog, setShowAddDocDialog, selectedFiles, setSelectedFiles }) => (
   <Card className="glass-effect border-white/20">
     <CardHeader>
       <div className="flex items-center justify-between">
@@ -66,15 +66,32 @@ const FormalityDocuments = ({ canUploadDocument, documents, documentsLoading, ha
       ) : documents.length > 0 ? (
         <div className="space-y-3">
           {documents.map((doc, index) => (
-            <div key={doc.id || index} className="flex items-center justify-between p-3 rounded-lg bg-white/5 border border-white/10 hover:bg-white/10 transition-colors">
+            <div key={doc.fullPath || doc.id || index} className="flex items-center justify-between p-3 rounded-lg bg-white/5 border border-white/10 hover:bg-white/10 transition-colors">
               <div className="flex items-center space-x-3">
                 <FileText className="w-4 h-4 text-blue-400" />
                 <span className="text-white">{doc.displayName || doc.name}</span>
               </div>
-              <Button variant="ghost" size="sm" onClick={() => handleDownloadDocument(doc)} className="text-blue-400 hover:text-blue-300 transition-colors">
-                <Download className="w-4 h-4 mr-2" />
-                Télécharger
-              </Button>
+              <div className="flex items-center gap-2">
+                <Button variant="ghost" size="sm" onClick={() => handleDownloadDocument(doc)} className="text-blue-400 hover:text-blue-300 transition-colors">
+                  <Download className="w-4 h-4 mr-2" />
+                  Télécharger
+                </Button>
+                {canUploadDocument && (
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    onClick={() => {
+                      if (window.confirm(`Supprimer le document \"${doc.displayName || doc.name}\" ?`)) {
+                        handleDeleteDocument(doc);
+                      }
+                    }}
+                    className="text-red-400 hover:text-red-300 transition-colors"
+                  >
+                    <Trash2 className="w-4 h-4 mr-2" />
+                    Supprimer
+                  </Button>
+                )}
+              </div>
             </div>
           ))}
         </div>

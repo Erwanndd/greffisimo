@@ -5,15 +5,10 @@ import { hasPaymentLinkForFormality } from '@/services/api/paymentService';
 
 const FormalityStatusUpdate = ({ formality, canEdit, handleStatusUpdate, handleTribunalUpdate, tribunals }) => {
   const statusOptions = [
-    { value: 'pending', label: 'En attente' },
-    { value: 'audit', label: 'Audit du dossier' },
-    { value: 'pieces', label: 'Collecte des pièces' },
-    { value: 'payment', label: 'Paiement' },
-    { value: 'paid', label: 'Payé' },
-    { value: 'fiscal_registration', label: 'Enregistrement fiscal' },
-    { value: 'parutions', label: 'Parutions légales' },
-    { value: 'saisie', label: 'Saisie du dossier' },
-    { value: 'validation', label: 'Validation par le greffe' }
+    { value: 'pending_payment', label: 'En attente de paiement' },
+    { value: 'formalist_processing', label: 'Traitement par le formaliste' },
+    { value: 'greffe_processing', label: 'Traitement par le greffe' },
+    { value: 'validated', label: 'Dossier validé' },
   ];
 
   const groupedTribunals = tribunals.reduce((acc, tribunal) => {
@@ -35,7 +30,7 @@ const FormalityStatusUpdate = ({ formality, canEdit, handleStatusUpdate, handleT
 
   const onChangeStatus = async (newStatus) => {
     console.log('[FormalityStatusUpdate] Requested status change', { formalityId: formality.id, newStatus });
-    if (newStatus === 'payment') {
+    if (newStatus === 'pending_payment') {
       // Always show dialog; status is updated only after the email is sent
       setShowPaymentDialog(true);
       return;
@@ -77,8 +72,8 @@ const FormalityStatusUpdate = ({ formality, canEdit, handleStatusUpdate, handleT
           formality={formality} 
           defaultEmail={defaultClientEmail}
           onEmailSent={() => {
-            console.log('[FormalityStatusUpdate] onEmailSent → setting status to payment', { formalityId: formality.id });
-            handleStatusUpdate('payment');
+            console.log('[FormalityStatusUpdate] onEmailSent → setting status to pending_payment', { formalityId: formality.id });
+            handleStatusUpdate('pending_payment');
           }}
         />
       </div>

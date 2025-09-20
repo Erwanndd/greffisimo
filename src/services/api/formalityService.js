@@ -142,3 +142,66 @@ export const deleteFormalityFromDB = async (id, user) => {
       });
     }
 };
+
+export const addClientsToFormalityInDB = async (formalityId, clientIds, user) => {
+    if (!clientIds || clientIds.length === 0) return [];
+    const rows = clientIds.map(clientId => ({ formality_id: formalityId, client_id: clientId }));
+
+    // Use upsert to avoid duplicates if a unique constraint exists
+    const { data, error } = await supabase
+        .from('formality_clients')
+        .upsert(rows, { onConflict: 'formality_id,client_id', ignoreDuplicates: true })
+        .select();
+    handleSupabaseError({ error, customMessage: 'adding clients to formality' });
+
+    const { data: formalityData, error: getFormalityError } = await supabase
+      .from('formalities')
+      .select(`*, formalist:profiles!formalist_id(*), clients:formality_clients!formality_id(profile:profiles!client_id(*))`)
+      .eq('id', formalityId)
+      .single();
+    handleSupabaseError({ error: getFormalityError, customMessage: 'fetching formality for client add notification' });
+
+    const formalityWithClients = { ...formalityData, clients: formalityData.clients.map(c => c.profile) };
+    const recipientEmails = getParticipantEmails(formalityWithClients, user.id);
+
+    await supabase.from('history').insert([{ formality_id: formalityId, action: `Client(s) ajouté(s).`, author_id: user.id }]);
+
+    await sendEmailNotification({
+      formality: formalityWithClients,
+      subject: `Nouveau(x) client(s) ajouté(s) à ${formalityWithClients.company_name}`,
+      message: `${clientIds.length} client(s) ont été ajouté(s) à la formalité par ${user.first_name} ${user.last_name}.`,
+      uploader: user,
+      adminEmails: recipientEmails
+    });
+
+    return data || [];
+};
+
+export const removeClientFromFormalityInDB = async (formalityId, clientId, user) => {
+    const { error } = await supabase
+        .from('formality_clients')
+        .delete()
+        .eq('formality_id', formalityId)
+        .eq('client_id', clientId);
+    handleSupabaseError({ error, customMessage: 'removing client from formality' });
+
+    await supabase.from('history').insert([{ formality_id: formalityId, action: `Client supprimé.`, author_id: user.id }]);
+
+    const { data: formalityData, error: getFormalityError } = await supabase
+      .from('formalities')
+      .select(`*, formalist:profiles!formalist_id(*), clients:formality_clients!formality_id(profile:profiles!client_id(*))`)
+      .eq('id', formalityId)
+      .single();
+    handleSupabaseError({ error: getFormalityError, customMessage: 'fetching formality for client remove notification' });
+
+    const formalityWithClients = { ...formalityData, clients: formalityData.clients.map(c => c.profile) };
+    const recipientEmails = getParticipantEmails(formalityWithClients, user.id);
+
+    await sendEmailNotification({
+      formality: formalityWithClients,
+      subject: `Client supprimé de ${formalityWithClients.company_name}`,
+      message: `Un client a été supprimé de la formalité par ${user.first_name} ${user.last_name}.`,
+      uploader: user,
+      adminEmails: recipientEmails
+    });
+};

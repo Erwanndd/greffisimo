@@ -47,7 +47,31 @@ export const fetchAllData = async (user) => {
     const { data: history, error: historyError } = await historyQuery;
     handleSupabaseError({ error: historyError, customMessage: 'fetching history' });
 
-    return { formalities: transformedFormalities, users: profiles, history };
+    // Compute last update per formality from history timestamps, falling back to updated_at/created_at
+    const latestHistoryByFormality = new Map();
+    for (const h of history) {
+      const existing = latestHistoryByFormality.get(h.formality_id);
+      if (!existing || new Date(h.timestamp) > new Date(existing)) {
+        latestHistoryByFormality.set(h.formality_id, h.timestamp);
+      }
+    }
+
+    const withLastUpdated = transformedFormalities.map(f => {
+      const historyTs = latestHistoryByFormality.get(f.id);
+      const updatedAt = f.updated_at || null;
+      const createdAt = f.created_at || null;
+      const lastUpdated = historyTs || updatedAt || createdAt || null;
+      return { ...f, last_updated_at: lastUpdated };
+    });
+
+    // Sort by last update desc (most recent first)
+    withLastUpdated.sort((a, b) => {
+      const da = a.last_updated_at ? new Date(a.last_updated_at).getTime() : 0;
+      const db = b.last_updated_at ? new Date(b.last_updated_at).getTime() : 0;
+      return db - da;
+    });
+
+    return { formalities: withLastUpdated, users: profiles, history };
 };
 
 export const fetchTribunals = async () => {

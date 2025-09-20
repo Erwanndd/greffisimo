@@ -2,8 +2,8 @@ import React, { createContext, useContext, useState, useEffect, useCallback } fr
 import { useAuth } from '@/contexts/AuthContext';
 import { useToast } from '@/components/ui/use-toast';
 import { fetchAllData } from '@/services/api/dataService';
-import { createFormalityInDB, updateFormalityInDB, deleteFormalityFromDB } from '@/services/api/formalityService';
-import { addDocumentToFormalityInDB, getDocumentsForFormality as getDocumentsFromApi } from '@/services/api/documentService';
+import { createFormalityInDB, updateFormalityInDB, deleteFormalityFromDB, addClientsToFormalityInDB, removeClientFromFormalityInDB } from '@/services/api/formalityService';
+import { addDocumentToFormalityInDB, getDocumentsForFormality as getDocumentsFromApi, deleteDocumentFromFormalityInDB } from '@/services/api/documentService';
 import { updateUserInDB, createUserInDB } from '@/services/api/userService';
 import { fetchMessagesForFormality, sendMessageInDB, getUnreadMessagesCountForUser, markMessagesAsReadForUser } from '@/services/api/messageService';
 import { fetchTribunals, fetchTariffs } from '@/services/api/dataService';
@@ -134,6 +134,39 @@ export const DataProvider = ({ children }) => {
     await handleApiCall(deleteFormalityFromDB, "La formalité a été supprimée.", true, id, user);
   };
 
+  const addClientsToFormality = async (formalityId, clientIds) => {
+    if (!clientIds || clientIds.length === 0) return;
+    try {
+      await addClientsToFormalityInDB(formalityId, clientIds, user);
+      // Update local state: append new client profiles
+      setFormalities(prev => prev.map(f => {
+        if (f.id !== formalityId) return f;
+        const newClients = users.filter(u => clientIds.includes(u.id));
+        const merged = [...(f.clients || []), ...newClients].filter((v, i, a) => v && a.findIndex(x => x.id === v.id) === i);
+        return { ...f, clients: merged, last_updated_at: new Date().toISOString() };
+      }).sort((a, b) => new Date(b.last_updated_at || 0) - new Date(a.last_updated_at || 0)));
+      toast({ title: 'Clients ajoutés', description: `${clientIds.length} collègue(s) ajouté(s).` });
+    } catch (error) {
+      console.error('Error adding clients:', error);
+      toast({ title: 'Erreur', description: error.message, variant: 'destructive' });
+    }
+  };
+
+  const removeClientFromFormality = async (formalityId, clientId) => {
+    try {
+      await removeClientFromFormalityInDB(formalityId, clientId, user);
+      setFormalities(prev => prev.map(f => {
+        if (f.id !== formalityId) return f;
+        const updatedClients = (f.clients || []).filter(c => c && c.id !== clientId);
+        return { ...f, clients: updatedClients, last_updated_at: new Date().toISOString() };
+      }).sort((a, b) => new Date(b.last_updated_at || 0) - new Date(a.last_updated_at || 0)));
+      toast({ title: 'Client supprimé', description: `Le client a été retiré du dossier.` });
+    } catch (error) {
+      console.error('Error removing client:', error);
+      toast({ title: 'Erreur', description: error.message, variant: 'destructive' });
+    }
+  };
+
   const addDocumentToFormality = async (formalityId, file) => {
     try {
         await addDocumentToFormalityInDB(formalityId, file, user);
@@ -151,11 +184,57 @@ export const DataProvider = ({ children }) => {
         };
         setHistory(prev => [newHistoryEntry, ...prev]);
 
+        // Also bump the formality's last_updated_at and reorder locally
+        setFormalities(prev => {
+          const updated = prev.map(f => f.id === formalityId ? { ...f, last_updated_at: newHistoryEntry.timestamp } : f);
+          return updated.sort((a, b) => {
+            const da = a.last_updated_at ? new Date(a.last_updated_at).getTime() : 0;
+            const db = b.last_updated_at ? new Date(b.last_updated_at).getTime() : 0;
+            return db - da;
+          });
+        });
+
     } catch (error) {
         console.error(`Error in addDocumentToFormality:`, error);
         toast({ title: "Erreur", description: error.message, variant: "destructive" });
     }
 };
+
+  const deleteDocumentFromFormality = async (formalityId, document) => {
+    try {
+      await deleteDocumentFromFormalityInDB(formalityId, document.fullPath, document.displayName || document.name, user);
+      toast({ title: 'Document supprimé', description: `"${document.displayName || document.name}" a été supprimé.` });
+
+      // Optimistic UI: remove from local list
+      setDocuments(prev => ({
+        ...prev,
+        [formalityId]: (prev[formalityId] || []).filter(doc => doc.fullPath !== document.fullPath)
+      }));
+
+      const newHistoryEntry = {
+        id: Date.now(),
+        formality_id: formalityId,
+        action: `Document "${document.displayName || document.name}" supprimé.`,
+        author_id: user.id,
+        author: user,
+        timestamp: new Date().toISOString()
+      };
+      setHistory(prev => [newHistoryEntry, ...prev]);
+
+      // Update ordering based on last update
+      setFormalities(prev => {
+        const updated = prev.map(f => f.id === formalityId ? { ...f, last_updated_at: newHistoryEntry.timestamp } : f);
+        return updated.sort((a, b) => {
+          const da = a.last_updated_at ? new Date(a.last_updated_at).getTime() : 0;
+          const db = b.last_updated_at ? new Date(b.last_updated_at).getTime() : 0;
+          return db - da;
+        });
+      });
+    } catch (error) {
+      console.error('Error deleting document:', error);
+      toast({ title: 'Erreur', description: error.message, variant: 'destructive' });
+    }
+  };
 
   const updateUser = async (id, updates) => {
     await handleApiCall(updateUserInDB, "L'utilisateur a été mis à jour.", true, id, updates);
@@ -250,7 +329,8 @@ export const DataProvider = ({ children }) => {
   const value = {
     formalities, users, history, tribunals, tariffs, messages, documents, loading, unreadMessagesCount, unreadFormalityIds,
     updateFormality, createFormality, deleteFormality,
-    createUser, updateUser, addDocumentToFormality,
+    addClientsToFormality, removeClientFromFormality,
+    createUser, updateUser, addDocumentToFormality, deleteDocumentFromFormality,
     fetchMessages, sendMessage, fetchUnreadCount,
     fetchDocumentsForFormality,
     getStatusLabel, getStatusColor, fetchData

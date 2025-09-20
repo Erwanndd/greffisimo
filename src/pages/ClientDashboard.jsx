@@ -6,7 +6,7 @@ import Layout from '@/components/Layout';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
-import { FileText, Clock, CheckCircle, Search, Bell, Loader2, Filter, ChevronDown, Scale, FileType, Plus, Flame, CreditCard } from 'lucide-react';
+import { FileText, Clock, CheckCircle, Search, Bell, Loader2, Filter, ChevronDown, Scale, FileType, Plus, Flame, CreditCard, Info } from 'lucide-react';
 import MultiSelect from '@/components/shared/MultiSelect';
 import ClientFormalityList from '@/components/client/ClientFormalityList';
 import { formalityTypes } from '@/lib/constants';
@@ -17,7 +17,7 @@ import { Switch } from '@/components/ui/switch';
 import { useToast } from '@/components/ui/use-toast';
 
 const ClientDashboard = () => {
-  const { formalities, tribunals, tariffs, loading, unreadMessagesCount, createFormality } = useData();
+  const { formalities, users, tribunals, tariffs, loading, unreadMessagesCount, createFormality } = useData();
   const { user } = useAuth();
   const { toast } = useToast();
   
@@ -37,25 +37,25 @@ const ClientDashboard = () => {
       const matchesType = typeFilter.length === 0 || typeFilter.includes(formality.type);
 
       return matchesSearch && matchesStatus && matchesTribunal && matchesType;
+    }).sort((a, b) => {
+      const da = a.last_updated_at ? new Date(a.last_updated_at).getTime() : 0;
+      const db = b.last_updated_at ? new Date(b.last_updated_at).getTime() : 0;
+      return db - da;
     });
   }, [formalities, searchTerm, statusFilter, tribunalFilter, typeFilter]);
 
   const stats = useMemo(() => ({
     total: formalities.length,
-    pending: formalities.filter(f => f.status === 'pending').length,
-    inProgress: formalities.filter(f => ['audit', 'pieces', 'payment', 'fiscal_registration', 'parutions', 'saisie'].includes(f.status)).length,
-    completed: formalities.filter(f => f.status === 'validation').length
+    pending: formalities.filter(f => f.status === 'pending_payment').length,
+    inProgress: formalities.filter(f => ['formalist_processing', 'greffe_processing'].includes(f.status)).length,
+    completed: formalities.filter(f => f.status === 'validated').length
   }), [formalities]);
   
   const statusOptions = [
-    { value: 'pending', label: 'En attente' },
-    { value: 'audit', label: 'Audit du dossier' },
-    { value: 'pieces', label: 'Collecte des pièces' },
-    { value: 'payment', label: 'Paiement' },
-    { value: 'fiscal_registration', label: 'Enregistrement fiscal' },
-    { value: 'parutions', label: 'Parutions légales' },
-    { value: 'saisie', label: 'Saisie du dossier' },
-    { value: 'validation', label: 'Validation par le greffe' }
+    { value: 'pending_payment', label: 'En attente de paiement' },
+    { value: 'formalist_processing', label: 'Traitement par le formaliste' },
+    { value: 'greffe_processing', label: 'Traitement par le greffe' },
+    { value: 'validated', label: 'Dossier validé' }
   ];
 
   const tribunalOptions = tribunals.map(tribunal => ({
@@ -73,11 +73,14 @@ const ClientDashboard = () => {
     company_name: '',
     siren: '',
     type: '',
-    status: 'pending',
+    status: 'pending_payment',
     is_urgent: false,
+    requires_tax_registration: false,
     tribunal_id: null,
     tariff_id: null
   });
+  const [selectedColleagueIds, setSelectedColleagueIds] = useState([]);
+  const [colleagueEmail, setColleagueEmail] = useState('');
 
   const groupedTribunals = tribunals.reduce((acc, tribunal) => {
     const type = tribunal.type || 'Autre';
@@ -86,18 +89,35 @@ const ClientDashboard = () => {
     return acc;
   }, {});
 
+  const clientsByEmail = (users || [])
+    .filter(u => u.role === 'client')
+    .reduce((acc, u) => { acc[(u.email || '').toLowerCase()] = u; return acc; }, {});
+  const clientsById = (users || [])
+    .filter(u => u.role === 'client')
+    .reduce((acc, u) => { acc[u.id] = u; return acc; }, {});
+
   const handleCreateFormality = async () => {
     if (!newFormality.company_name || !newFormality.type || !newFormality.tariff_id) {
       toast({ title: 'Erreur', description: 'Veuillez remplir tous les champs obligatoires (Nom de la société, Type, Tarif)', variant: 'destructive' });
       return;
     }
-    await createFormality({
-      ...newFormality,
+    const clientIds = Array.from(new Set([user.id, ...selectedColleagueIds]));
+    // Build payload with known backend columns only to avoid DB errors
+    const payload = {
+      company_name: newFormality.company_name,
+      siren: newFormality.siren,
+      type: newFormality.type,
+      status: newFormality.status,
+      is_urgent: newFormality.is_urgent,
+      requires_tax_registration: newFormality.requires_tax_registration,
       tribunal_id: newFormality.tribunal_id ? parseInt(newFormality.tribunal_id) : null,
       tariff_id: parseInt(newFormality.tariff_id),
-    }, [user.id]);
+    };
+    await createFormality(payload, clientIds);
 
-    setNewFormality({ company_name: '', siren: '', type: '', status: 'pending', is_urgent: false, tribunal_id: null, tariff_id: null });
+    setNewFormality({ company_name: '', siren: '', type: '', status: 'pending_payment', is_urgent: false, requires_tax_registration: false, tribunal_id: null, tariff_id: null });
+    setSelectedColleagueIds([]);
+    setColleagueEmail('');
     setShowCreateFormality(false);
   };
 
@@ -250,6 +270,87 @@ const ClientDashboard = () => {
                     <Flame className="w-4 h-4 mr-2" />
                     Urgence
                   </Label>
+                </div>
+
+                <div className="flex items-center space-x-2">
+                  <Switch
+                    id="tax-reg-switch"
+                    checked={newFormality.requires_tax_registration}
+                    onCheckedChange={(checked) => setNewFormality({ ...newFormality, requires_tax_registration: checked })}
+                  />
+                  <Label htmlFor="tax-reg-switch" className="flex items-center text-white">
+                    <Info className="w-4 h-4 mr-2" title="par ex. pour les traités de fusion" />
+                    Enregistrement fiscal
+                  </Label>
+                </div>
+
+                <div className="space-y-2">
+                  <Label className="text-white">Ajouter un collègue (par e‑mail)</Label>
+                  <div className="flex gap-2">
+                    <Input
+                      placeholder="prenom.nom@entreprise.com"
+                      type="email"
+                      value={colleagueEmail}
+                      onChange={(e) => setColleagueEmail(e.target.value)}
+                      className="bg-white/5 border-white/20 text-white"
+                    />
+                    <Button
+                      type="button"
+                      variant="outline"
+                      onClick={() => {
+                        const email = (colleagueEmail || '').trim().toLowerCase();
+                        if (!email) return;
+                        const valid = /[^@\s]+@[^@\s]+\.[^@\s]+/.test(email);
+                        if (!valid) {
+                          toast({ title: 'Email invalide', description: 'Veuillez saisir une adresse e‑mail valide.', variant: 'destructive' });
+                          return;
+                        }
+                        const userProfile = clientsByEmail[email];
+                        if (!userProfile) {
+                          toast({ title: 'Utilisateur introuvable', description: "Cette adresse n'est pas associée à un utilisateur. Invitez votre collègue à créer un compte, puis réessayez.", variant: 'destructive' });
+                          return;
+                        }
+                        if (selectedColleagueIds.includes(userProfile.id) || userProfile.id === user.id) {
+                          toast({ title: 'Déjà sélectionné', description: 'Ce collègue est déjà ajouté.' });
+                          return;
+                        }
+                        setSelectedColleagueIds(prev => [...prev, userProfile.id]);
+                        setColleagueEmail('');
+                      }}
+                      className="hover:bg-white/10"
+                    >
+                      Ajouter
+                    </Button>
+                  </div>
+                  {selectedColleagueIds.length > 0 && (
+                    <div className="space-y-2">
+                      <p className="text-xs text-gray-400">Collègues ajoutés</p>
+                      <div className="flex flex-wrap gap-2">
+                        {selectedColleagueIds.map(id => {
+                          const profile = clientsById[id];
+                          const label = profile
+                            ? `${profile.first_name || ''} ${profile.last_name || ''}`.trim() || (profile.email || '')
+                            : `Utilisateur #${id}`;
+                          const email = profile?.email || '';
+                          return (
+                            <div key={id} className="flex items-center gap-2 bg-white/5 border border-white/10 rounded-full px-3 py-1">
+                              <span className="text-sm text-white">{label}</span>
+                              {email && <span className="text-xs text-gray-400">{email}</span>}
+                              <button
+                                type="button"
+                                aria-label="Retirer ce collègue"
+                                onClick={() => setSelectedColleagueIds(prev => prev.filter(cid => cid !== id))}
+                                className="ml-1 rounded-full hover:bg-white/10 text-gray-300 hover:text-white px-1"
+                              >
+                                ×
+                              </button>
+                            </div>
+                          );
+                        })}
+                      </div>
+                    </div>
+                  )}
+                  <p className="text-xs text-gray-400">Vous êtes automatiquement ajouté comme client.</p>
                 </div>
               </div>
               <DialogFooter>

@@ -107,3 +107,41 @@ export const getDocumentsForFormality = async (formalityId) => {
     };
   }).filter(doc => doc.signedUrl);
 };
+
+export const deleteDocumentFromFormalityInDB = async (formalityId, fullPath, originalName, user) => {
+  if (!formalityId || !fullPath) {
+    throw new Error('Paramètres manquants pour la suppression du document.');
+  }
+
+  const { error: removeError } = await supabase.storage
+    .from('documents')
+    .remove([fullPath]);
+  handleSupabaseError({ error: removeError, customMessage: `removing document ${fullPath}` });
+
+  const displayName = originalName || fullPath.split('/').pop();
+
+  const { error: historyError } = await supabase.from('history').insert([
+    { formality_id: formalityId, action: `Document "${displayName}" supprimé.`, author_id: user.id },
+  ]);
+  handleSupabaseError({ error: historyError, customMessage: 'logging document deletion' });
+
+  const { data: formalityData, error: getFormalityError } = await supabase
+    .from('formalities')
+    .select(`*, formalist:profiles!formalist_id(*), clients:formality_clients!formality_id(profile:profiles!client_id(*))`)
+    .eq('id', formalityId)
+    .single();
+  handleSupabaseError({ error: getFormalityError, customMessage: 'fetching formality for deletion notification' });
+
+  const formalityWithClients = { ...formalityData, clients: formalityData.clients.map(c => c.profile) };
+  const recipientEmails = getParticipantEmails(formalityWithClients, user.id);
+
+  await sendEmailNotification({
+    formality: formalityWithClients,
+    subject: `Document supprimé pour ${formalityWithClients.company_name}`,
+    message: `Le document "${displayName}" a été supprimé par ${user.first_name} ${user.last_name}.`,
+    uploader: user,
+    adminEmails: recipientEmails
+  });
+
+  return { success: true };
+};

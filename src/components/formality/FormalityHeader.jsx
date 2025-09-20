@@ -1,6 +1,6 @@
 import React from 'react';
 import { CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
-import { Flame } from 'lucide-react';
+import { Flame, Receipt } from 'lucide-react';
 
 const FormalityHeader = ({ formality, getStatusLabel, getStatusColor }) => (
   <CardHeader>
@@ -14,6 +14,12 @@ const FormalityHeader = ({ formality, getStatusLabel, getStatusColor }) => (
           <span className="flex items-center text-red-500 text-sm font-semibold bg-red-500/10 px-3 py-1 rounded-full">
             <Flame className="w-4 h-4 mr-1.5" />
             Urgent
+          </span>
+        )}
+        {formality.requires_tax_registration && (
+          <span className="flex items-center text-amber-400 text-sm font-semibold bg-amber-400/10 px-3 py-1 rounded-full">
+            <Receipt className="w-4 h-4 mr-1.5" />
+            Enregistrement fiscal
           </span>
         )}
         <span className={`px-4 py-2 rounded-full text-sm font-medium border ${getStatusColor(formality.status)}`}>
