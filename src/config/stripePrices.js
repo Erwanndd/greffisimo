@@ -24,3 +24,11 @@ export const getStripePriceIdByKey = (key) => {
   return item?.priceId || '';
 };
 
+// Returns the Stripe Price ID to use for a given formality.
+// For now, always use a default configured price ID.
+export const getStripePriceIdForFormality = (_formality) => {
+  const def = import.meta.env.VITE_STRIPE_PRICE_ID_DEFAULT || '';
+  if (def) return def;
+  const first = STRIPE_PRICE_OPTIONS.find(o => o.priceId);
+  return first?.priceId || '';
+};

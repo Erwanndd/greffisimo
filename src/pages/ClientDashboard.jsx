@@ -78,8 +78,7 @@ const ClientDashboard = () => {
     status: 'pending_payment',
     is_urgent: false,
     requires_tax_registration: false,
-    tribunal_id: null,
-    tariff_id: null
+    tribunal_id: null
   });
   const [selectedColleagueIds, setSelectedColleagueIds] = useState([]);
   const [colleagueEmail, setColleagueEmail] = useState('');
@@ -112,8 +111,8 @@ const ClientDashboard = () => {
     .reduce((acc, u) => { acc[u.id] = u; return acc; }, {});
 
   const handleCreateFormality = async () => {
-    if (!newFormality.company_name || !newFormality.type || !newFormality.tariff_id) {
-      toast({ title: 'Erreur', description: 'Veuillez remplir tous les champs obligatoires (Nom de la société, Type, Tarif)', variant: 'destructive' });
+    if (!newFormality.company_name || !newFormality.type) {
+      toast({ title: 'Erreur', description: 'Veuillez remplir tous les champs obligatoires (Nom de la société, Type)', variant: 'destructive' });
       return;
     }
     const clientIds = Array.from(new Set([user.id, ...selectedColleagueIds]));
@@ -126,11 +125,10 @@ const ClientDashboard = () => {
       is_urgent: newFormality.is_urgent,
       requires_tax_registration: newFormality.requires_tax_registration,
       tribunal_id: newFormality.tribunal_id ? parseInt(newFormality.tribunal_id) : null,
-      tariff_id: parseInt(newFormality.tariff_id),
     };
     await createFormality(payload, clientIds);
 
-    setNewFormality({ company_name: '', siren: '', type: '', status: 'pending_payment', is_urgent: false, requires_tax_registration: false, tribunal_id: null, tariff_id: null });
+    setNewFormality({ company_name: '', siren: '', type: '', status: 'pending_payment', is_urgent: false, requires_tax_registration: false, tribunal_id: null });
     setSelectedColleagueIds([]);
     setColleagueEmail('');
     setShowCreateFormality(false);
@@ -243,21 +241,7 @@ const ClientDashboard = () => {
                   </SelectContent>
                 </Select>
 
-                <Select value={newFormality.tariff_id || ''} onValueChange={(value) => setNewFormality({...newFormality, tariff_id: value})}>
-                  <SelectTrigger className="bg-white/5 border-white/20 text-white focus:border-blue-500 focus:ring-blue-500">
-                    <div className="flex items-center">
-                      <CreditCard className="w-4 h-4 mr-2 text-gray-400" />
-                      <SelectValue placeholder="Sélectionner un tarif" />
-                    </div>
-                  </SelectTrigger>
-                  <SelectContent className="bg-slate-800 border-white/20">
-                    {tariffs && tariffs.map(tariff => (
-                      <SelectItem key={tariff.id} value={tariff.id.toString()}>
-                        {tariff.name} - {(tariff.amount / 100).toFixed(2)} €
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
+                {/* Le tarif est désormais calculé automatiquement côté serveur (Stripe Price ID par défaut). */}
 
                 <Select value={newFormality.tribunal_id || ''} onValueChange={(value) => setNewFormality({...newFormality, tribunal_id: value})}>
                   <SelectTrigger className="bg-white/5 border-white/20 text-white focus:border-blue-500 focus:ring-blue-500">

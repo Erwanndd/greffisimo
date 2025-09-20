@@ -5,15 +5,13 @@ import { Input } from '@/components/ui/input';
 import { useToast } from '@/components/ui/use-toast';
 import { createCheckoutSession, recordPaymentLink } from '@/services/api/paymentService';
 import { sendEmailNotification } from '@/services/NotificationService';
-import { STRIPE_PRICE_OPTIONS, getStripePriceIdByKey } from '@/config/stripePrices';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { getStripePriceIdForFormality } from '@/config/stripePrices';
 
 const PaymentLinkDialog = ({ open, onOpenChange, formality, defaultEmail, onEmailSent }) => {
   const { toast } = useToast();
   const [email, setEmail] = useState(defaultEmail || '');
   const [loading, setLoading] = useState(false);
   const [sending, setSending] = useState(false);
-  const [selectedPriceKey, setSelectedPriceKey] = useState('1');
   const [generatedUrl, setGeneratedUrl] = useState('');
   const [generatedSessionId, setGeneratedSessionId] = useState('');
   const isValidEmail = (val) => typeof val === 'string' && /.+@.+\..+/.test(val);
@@ -24,13 +22,12 @@ const PaymentLinkDialog = ({ open, onOpenChange, formality, defaultEmail, onEmai
     try {
       setLoading(true);
       console.log('[PaymentLinkDialog] Generating link', { formalityId: formality?.id, amount, currency, email });
-      if (!amount || amount <= 0) {
-        toast({ title: 'Montant manquant', description: "Aucun montant configuré pour cette formalité.", variant: 'destructive' });
-        return;
+      const priceId = getStripePriceIdForFormality(formality);
+      if (!priceId) {
+        throw new Error('Aucun Stripe Price ID par défaut configuré. Définissez VITE_STRIPE_PRICE_ID_DEFAULT.');
       }
-      const priceId = getStripePriceIdByKey(selectedPriceKey);
-      console.log('[PaymentLinkDialog] Using priceId', { selectedPriceKey, priceId });
-      const { url, sessionId } = await createCheckoutSession({ formalityId: formality.id, amount, currency, customerEmail: email, priceId: priceId || undefined });
+      console.log('[PaymentLinkDialog] Using priceId', { priceId });
+      const { url, sessionId } = await createCheckoutSession({ formalityId: formality.id, amount, currency, customerEmail: email, priceId });
       try {
         await recordPaymentLink({ formalityId: formality.id, sessionId, url, amount, currency, customerEmail: email });
       } catch (e) {
@@ -96,22 +93,7 @@ const PaymentLinkDialog = ({ open, onOpenChange, formality, defaultEmail, onEmai
         <div className="space-y-3">
           <label className="text-sm text-gray-300">Adresse e-mail du client</label>
           <Input value={email} onChange={(e) => setEmail(e.target.value)} placeholder="client@example.com" className="bg-white/5 border-white/20 text-white" />
-          <div>
-            <label className="text-sm text-gray-300">Tarif (Stripe)</label>
-            <Select value={selectedPriceKey} onValueChange={setSelectedPriceKey}>
-              <SelectTrigger className="bg-white/5 border-white/20 text-white mt-1">
-                <SelectValue placeholder="Choisir un prix" />
-              </SelectTrigger>
-              <SelectContent className="bg-slate-800 border-white/20">
-                {STRIPE_PRICE_OPTIONS.map(o => (
-                  <SelectItem key={o.key} value={o.key} disabled={!o.priceId}>
-                    {o.label}{!o.priceId ? ' (non configuré)' : ''}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-          </div>
-          <p className="text-sm text-gray-400">Montant: {(amount/100).toFixed(2)} {currency.toUpperCase()}</p>
+          {/* Prix calculé côté serveur via Stripe Price ID par défaut */}
           {generatedUrl && (
             <div className="mt-2 p-2 bg-white/5 border border-white/10 rounded text-sm">
               <div className="text-gray-300 mb-1">Lien de paiement généré:</div>

@@ -3,18 +3,19 @@ import { Button } from '@/components/ui/button';
 import { useToast } from '@/components/ui/use-toast';
 import { CreditCard } from 'lucide-react';
 import { createCheckoutSession } from '@/services/api/paymentService';
+import { getStripePriceIdForFormality } from '@/config/stripePrices';
 
 const Payment = ({ formality }) => {
   const { toast } = useToast();
 
   const handlePayment = async () => {
     try {
-      const amount = formality?.tariff?.amount || formality?.amount;
-      if (!amount) {
-        toast({ title: "Montant manquant", description: "Aucun montant configuré pour cette formalité.", variant: "destructive" });
+      const priceId = getStripePriceIdForFormality(formality);
+      if (!priceId) {
+        toast({ title: 'Configuration manquante', description: 'VITE_STRIPE_PRICE_ID_DEFAULT non défini.', variant: 'destructive' });
         return;
       }
-      const { url } = await createCheckoutSession({ formalityId: formality.id, amount, currency: 'eur', customerEmail: undefined });
+      const { url } = await createCheckoutSession({ formalityId: formality.id, amount: formality?.amount, currency: 'eur', customerEmail: undefined, priceId });
       if (!url) throw new Error('URL de paiement indisponible');
       window.location.href = url;
     } catch (error) {

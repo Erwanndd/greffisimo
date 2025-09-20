@@ -111,7 +111,6 @@ Deno.serve(async (req) => {
 
     const formalityDetailsSection = (showStatus = true) => formality ? `
       <div style="background:#F9FAFB;border-radius:8px;padding:20px;margin-top:24px">
-        <div style="font-size:14px;font-weight:600;color:#374151;margin-bottom:12px">📋 Détails de la formalité</div>
         <table role="presentation" width="100%" cellpadding="0" cellspacing="0">
           <tr>
             <td style="padding:8px 0">
@@ -160,15 +159,6 @@ Deno.serve(async (req) => {
             ${headerSection}
             <tr>
               <td style="padding:40px 32px">
-                <div style="text-align:center;margin-bottom:32px">
-                  <table role="presentation" align="center" width="80" height="80" cellpadding="0" cellspacing="0" style="margin:0 auto;background:linear-gradient(135deg, #10B981 0%, #059669 100%);border-radius:50%;box-shadow:0 8px 16px rgba(16,185,129,0.2)">
-                    <tr>
-                      <td align="center" valign="middle" width="80" height="80" style="border-radius:50%;">
-                        <span style="font-size:36px;line-height:1;">💳</span>
-                      </td>
-                    </tr>
-                  </table>
-                </div>
                 
                 <h1 style="font-size:24px;color:#111827;font-weight:700;text-align:center;margin:0 0 8px 0">
                   Votre lien de paiement est prêt
@@ -214,12 +204,6 @@ Deno.serve(async (req) => {
             ${headerSection}
             <tr>
               <td style="padding:40px 32px">
-                <div style="text-align:center;margin-bottom:32px">
-                  <div style="width:80px;height:80px;background:linear-gradient(135deg, #3B82F6 0%, #6366F1 100%);border-radius:50%;display:flex;align-items:center;justify-content:center;margin:0 auto;box-shadow:0 8px 16px rgba(59,130,246,0.2)">
-                    <span style="font-size:36px">📊</span>
-                  </div>
-                </div>
-                
                 <h1 style="font-size:24px;color:#111827;font-weight:700;text-align:center;margin:0 0 8px 0">
                   Mise à jour du statut de votre dossier
                 </h1>
