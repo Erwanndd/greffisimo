@@ -6,7 +6,7 @@ import Layout from '@/components/Layout';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
-import { FileText, Clock, CheckCircle, Search, Bell, Loader2, Filter, ChevronDown, Scale, FileType, Plus, Flame, CreditCard, Info } from 'lucide-react';
+import { FileText, Clock, CheckCircle, Search, Bell, Loader2, Filter, ChevronDown, Scale, FileType, Plus, Flame, CreditCard, Info, FileSignature } from 'lucide-react';
 import MultiSelect from '@/components/shared/MultiSelect';
 import ClientFormalityList from '@/components/client/ClientFormalityList';
 import { formalityTypes } from '@/lib/constants';
@@ -69,6 +69,7 @@ const ClientDashboard = () => {
   }));
 
   const [showCreateFormality, setShowCreateFormality] = useState(false);
+  const [showShareTransfer, setShowShareTransfer] = useState(false);
   const [newFormality, setNewFormality] = useState({
     company_name: '',
     siren: '',
@@ -81,6 +82,19 @@ const ClientDashboard = () => {
   });
   const [selectedColleagueIds, setSelectedColleagueIds] = useState([]);
   const [colleagueEmail, setColleagueEmail] = useState('');
+  const [shareTransfer, setShareTransfer] = useState({
+    company_name: '',
+    legal_form: '',
+    is_spi: false, // Société à prépondérance immobilière
+    tax_base: ''
+  });
+
+  const computeDuties = () => {
+    const base = parseFloat(shareTransfer.tax_base);
+    if (Number.isNaN(base) || base <= 0) return null;
+    // Placeholder until formula is provided by Erwann
+    return null;
+  };
 
   const groupedTribunals = tribunals.reduce((acc, tribunal) => {
     const type = tribunal.type || 'Autre';
@@ -356,6 +370,101 @@ const ClientDashboard = () => {
               <DialogFooter>
                 <Button variant="outline" onClick={() => setShowCreateFormality(false)} className="hover:bg-white/10 transition-colors">Annuler</Button>
                 <Button onClick={handleCreateFormality} className="bg-gradient-to-r from-blue-500 to-purple-500 hover:from-blue-600 hover:to-purple-600 transition-all duration-300 shadow-lg hover:shadow-xl">Créer</Button>
+              </DialogFooter>
+            </DialogContent>
+          </Dialog>
+
+          <Dialog open={showShareTransfer} onOpenChange={setShowShareTransfer}>
+            <DialogTrigger asChild>
+              <Button variant="outline" className="bg-white/5 border-white/20 text-white hover:bg-white/10 transition-all duration-200">
+                <FileSignature className="w-4 h-4 mr-2" />
+                Cession de titres
+              </Button>
+            </DialogTrigger>
+            <DialogContent className="glass-effect border-white/20">
+              <DialogHeader>
+                <DialogTitle className="text-white">Cession de titres</DialogTitle>
+                <DialogDescription className="text-gray-300">Renseignez les informations pour calculer les droits d’enregistrement.</DialogDescription>
+              </DialogHeader>
+              <div className="space-y-4 py-4">
+                <div className="space-y-2">
+                  <Label className="text-white">Nom de la société</Label>
+                  <Input
+                    placeholder="Renseigner le nom de la société"
+                    value={shareTransfer.company_name}
+                    onChange={(e) => setShareTransfer({ ...shareTransfer, company_name: e.target.value })}
+                    className="bg-white/5 border-white/20 text-white"
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label className="text-white">Forme sociale</Label>
+                  <Input
+                    placeholder="Ex: SAS, SARL, SA..."
+                    value={shareTransfer.legal_form}
+                    onChange={(e) => setShareTransfer({ ...shareTransfer, legal_form: e.target.value })}
+                    className="bg-white/5 border-white/20 text-white"
+                  />
+                </div>
+
+                <div className="flex items-center space-x-2">
+                  <Switch
+                    id="spi-switch"
+                    checked={shareTransfer.is_spi}
+                    onCheckedChange={(checked) => setShareTransfer({ ...shareTransfer, is_spi: checked })}
+                  />
+                  <Label htmlFor="spi-switch" className="flex items-center text-white">
+                    Société à prépondérance immobilière
+                  </Label>
+                </div>
+
+                <div className="space-y-2">
+                  <Label className="text-white">Base taxable (€)</Label>
+                  <Input
+                    type="number"
+                    inputMode="decimal"
+                    step="0.01"
+                    min="0"
+                    placeholder="0,00"
+                    value={shareTransfer.tax_base}
+                    onChange={(e) => setShareTransfer({ ...shareTransfer, tax_base: e.target.value })}
+                    className="bg-white/5 border-white/20 text-white"
+                  />
+                </div>
+
+                <div className="text-sm text-gray-300">
+                  Droits d’enregistrement estimés: {(() => {
+                    const v = computeDuties();
+                    if (v == null) return 'en attente de formule';
+                    return new Intl.NumberFormat('fr-FR', { style: 'currency', currency: 'EUR' }).format(v);
+                  })()}
+                </div>
+              </div>
+              <DialogFooter>
+                <Button variant="outline" onClick={() => setShowShareTransfer(false)} className="hover:bg-white/10 transition-colors">Fermer</Button>
+                <Button
+                  onClick={async () => {
+                    const name = (shareTransfer.company_name || '').trim();
+                    if (!name) {
+                      toast({ title: 'Nom requis', description: 'Veuillez renseigner le nom de la société.', variant: 'destructive' });
+                      return;
+                    }
+                    try {
+                      await createFormality({
+                        company_name: name,
+                        type: 'Cession de titres',
+                        status: 'pending_payment',
+                        is_urgent: false,
+                      }, [user.id]);
+                      setShowShareTransfer(false);
+                      setShareTransfer({ company_name: '', legal_form: '', is_spi: false, tax_base: '' });
+                    } catch (e) {
+                      // toast is handled by createFormality's error path; optional local handling
+                    }
+                  }}
+                  className="bg-gradient-to-r from-blue-500 to-purple-500 hover:from-blue-600 hover:to-purple-600 transition-all duration-300 shadow-lg hover:shadow-xl"
+                >
+                  Créer
+                </Button>
               </DialogFooter>
             </DialogContent>
           </Dialog>
