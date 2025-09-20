@@ -47,12 +47,13 @@ const ClientDashboard = () => {
   const stats = useMemo(() => ({
     total: formalities.length,
     pending: formalities.filter(f => f.status === 'pending_payment').length,
-    inProgress: formalities.filter(f => ['formalist_processing', 'greffe_processing'].includes(f.status)).length,
+    inProgress: formalities.filter(f => ['paid', 'formalist_processing', 'greffe_processing'].includes(f.status)).length,
     completed: formalities.filter(f => f.status === 'validated').length
   }), [formalities]);
   
   const statusOptions = [
     { value: 'pending_payment', label: 'En attente de paiement' },
+    { value: 'paid', label: 'Payé' },
     { value: 'formalist_processing', label: 'Traitement par le formaliste' },
     { value: 'greffe_processing', label: 'Traitement par le greffe' },
     { value: 'validated', label: 'Dossier validé' }
