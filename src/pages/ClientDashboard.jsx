@@ -53,7 +53,6 @@ const ClientDashboard = () => {
   
   const statusOptions = [
     { value: 'pending_payment', label: 'En attente de paiement' },
-    { value: 'paid', label: 'Payé' },
     { value: 'formalist_processing', label: 'Traitement par le formaliste' },
     { value: 'greffe_processing', label: 'Traitement par le greffe' },
     { value: 'validated', label: 'Dossier validé' }
@@ -271,16 +270,19 @@ const ClientDashboard = () => {
                   </Label>
                 </div>
 
-                <div className="flex items-center space-x-2">
-                  <Switch
-                    id="tax-reg-switch"
-                    checked={newFormality.requires_tax_registration}
-                    onCheckedChange={(checked) => setNewFormality({ ...newFormality, requires_tax_registration: checked })}
-                  />
-                  <Label htmlFor="tax-reg-switch" className="flex items-center text-white">
-                    <Info className="w-4 h-4 mr-2" title="par ex. pour les traités de fusion" />
-                    Enregistrement fiscal
-                  </Label>
+                <div>
+                  <div className="flex items-center space-x-2">
+                    <Switch
+                      id="tax-reg-switch"
+                      checked={newFormality.requires_tax_registration}
+                      onCheckedChange={(checked) => setNewFormality({ ...newFormality, requires_tax_registration: checked })}
+                    />
+                    <Label htmlFor="tax-reg-switch" className="flex items-center text-white">
+                      <Info className="w-4 h-4 mr-2" />
+                      Enregistrement fiscal
+                    </Label>
+                  </div>
+                  <p className="text-xs text-gray-400 mt-1 ml-6">(par ex. pour les traités de fusion)</p>
                 </div>
 
                 <div className="space-y-2">

@@ -230,7 +230,6 @@ const HomePage = () => {
             {/* Stats */}
             <div className="mt-16 grid grid-cols-3 gap-8 max-w-2xl mx-auto">
               {[
-                { value: "24h", label: "Traitement express" },
                 { value: "100%", label: "Sécurisé" },
                 { value: "Expert", label: "Accompagnement" }
               ].map((stat, i) => (

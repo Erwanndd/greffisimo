@@ -57,7 +57,6 @@ Deno.serve(async (req) => {
     const getStatusBadge = (status: string) => {
       const statusMap: Record<string, {label: string, color: string}> = {
         'pending_payment': { label: 'En attente de paiement', color: '#F59E0B' },
-        'paid': { label: 'Payé', color: '#3B82F6' },
         'formalist_processing': { label: 'Traitement par le formaliste', color: '#8B5CF6' },
         'greffe_processing': { label: 'Traitement par le greffe', color: '#6366F1' },
         'validated': { label: 'Dossier validé', color: '#10B981' },
@@ -80,15 +79,11 @@ Deno.serve(async (req) => {
       : '';
 
     const headerSection = `
-      <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background:linear-gradient(135deg, #1E40AF 0%, #7C3AED 100%);border-radius:12px 12px 0 0">
+      <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background:#F9FAFB;border-radius:0 0 12px 12px;border-top:1px solid #E5E7EB">
         <tr>
           <td style="padding:32px;text-align:center">
             <div style="display:inline-block">
-              <div style="width:60px;height:60px;background:rgba(255,255,255,0.15);border-radius:16px;display:flex;align-items:center;justify-content:center;margin:0 auto 12px;backdrop-filter:blur(10px)">
-                <span style="font-size:28px;font-weight:bold;color:#fff">G</span>
-              </div>
-              <div style="font-size:24px;color:#fff;font-weight:700;letter-spacing:-0.5px">Greffissimo</div>
-              <div style="font-size:13px;color:rgba(255,255,255,0.8);margin-top:4px">Simplifiez vos formalités juridiques</div>
+              <div style="font-size:18px;color:#111827;font-weight:500;text-align:center;margin:0 0 8px 0">Greffissimo</div>
             </div>
           </td>
         </tr>
