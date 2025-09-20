@@ -52,6 +52,25 @@ export default async function handler(req: any, res: any) {
         ? session.payment_intent
         : session.payment_intent?.id;
 
+      // Capture old status and recipients before updating
+      let oldStatus: string | null = null;
+      let recipients: string[] = [];
+      let formalityForEmail: any = null;
+      if (!Number.isNaN(formalityId)) {
+        const { data: current, error: curErr } = await supabase
+          .from('formalities')
+          .select(`id, company_name, status, formalist:profiles!formalist_id(*), clients:formality_clients!formality_id(profile:profiles!client_id(*))`)
+          .eq('id', formalityId)
+          .single();
+        if (!curErr && current) {
+          oldStatus = current.status as string;
+          const clientProfiles = (current.clients || []).map((c: any) => c?.profile).filter(Boolean);
+          const emails = [current.formalist?.email, ...clientProfiles.map((c: any) => c?.email)]
+            .filter((e: any) => typeof e === 'string' && e.includes('@')) as string[];
+          recipients = Array.from(new Set(emails));
+          formalityForEmail = { ...current, clients: clientProfiles };
+        }
+      }
 
       // Update payments table
       await supabase
@@ -65,6 +84,31 @@ export default async function handler(req: any, res: any) {
           .from('formalities')
           .update({ status: 'formalist_processing' })
           .eq('id', formalityId);
+
+        // Send notification email (best-effort)
+        try {
+          const publicBase = process.env.PUBLIC_BASE_URL || '';
+          const actionUrl = publicBase && formalityId ? `${publicBase.replace(/\/$/, '')}/formality/${formalityId}` : undefined;
+          if (recipients.length > 0) {
+            await supabase.functions.invoke('send-email', {
+              body: {
+                formality: formalityForEmail ? { ...formalityForEmail, status: 'formalist_processing' } : { id: formalityId, status: 'formalist_processing' },
+                subject: formalityForEmail?.company_name
+                  ? `Paiement confirmé – ${formalityForEmail.company_name}`
+                  : 'Paiement confirmé',
+                message: `Le paiement a été confirmé. Votre dossier passe en traitement par le formaliste.`,
+                uploader: null,
+                adminEmails: recipients,
+                template: 'status_change',
+                actionUrl,
+                actionLabel: 'Accéder au dossier',
+                meta: { oldStatus: oldStatus || 'pending_payment' },
+              },
+            });
+          }
+        } catch (e) {
+          console.error('send-email invocation failed (ignored):', e);
+        }
       }
     }
   } catch (err) {
