@@ -30,7 +30,7 @@ export default async function handler(req: any, res: any) {
     return;
   }
 
-  const stripe = new Stripe(stripeKey, { apiVersion: '2024-06-20' });
+  const stripe = new Stripe(stripeKey, { apiVersion: '2023-10-16' });
   const supabase = createClient(supabaseUrl, supabaseServiceRoleKey);
 
   let event: Stripe.Event;
@@ -77,4 +77,3 @@ export default async function handler(req: any, res: any) {
   res.setHeader('Content-Type', 'application/json');
   res.end(JSON.stringify({ received: true }));
 }
-

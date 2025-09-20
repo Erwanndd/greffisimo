@@ -39,7 +39,7 @@ export default async function handler(req: any, res: any) {
       return;
     }
 
-    const stripe = new Stripe(stripeKey, { apiVersion: '2024-06-20' });
+    const stripe = new Stripe(stripeKey, { apiVersion: '2023-10-16' });
 
     const originHeader = req.headers['origin'] as string | undefined;
     const publicBase = process.env.PUBLIC_BASE_URL;
@@ -80,4 +80,3 @@ export default async function handler(req: any, res: any) {
     res.end(JSON.stringify({ error: err?.message || 'Bad Request' }));
   }
 }
-
