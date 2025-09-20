@@ -65,6 +65,8 @@ export const updateFormalityInDB = async (id, updates, user) => {
         .select(`*, formalist:profiles!formalist_id(*), clients:formality_clients!formality_id(profile:profiles!client_id(*))`)
         .eq('id', id)
         .single();
+    console.log('Fetch error', fetchError);
+    console.log('Old formality', oldFormality);
     handleSupabaseError({ error: fetchError, customMessage: 'fetching formality for update' });
 
     const { data: updatedFormality, error: updateError } = await supabase
@@ -73,6 +75,7 @@ export const updateFormalityInDB = async (id, updates, user) => {
         .eq('id', id)
         .select(`*, formalist:profiles!formalist_id(*), clients:formality_clients!formality_id(profile:profiles!client_id(*))`)
         .single();
+    console.log('Updated formality', updateError);
     handleSupabaseError({ error: updateError, customMessage: 'updating formality' });
     
     let historyAction = 'Mise à jour de la formalité.';

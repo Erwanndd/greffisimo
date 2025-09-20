@@ -13,8 +13,10 @@ export const hasPaidPaymentForFormality = async (formalityId) => {
 };
 
 export const createCheckoutSession = async ({ formalityId, amount, currency = 'eur', customerEmail, priceId }) => {
-  const { data, error } = await supabase.functions.invoke('create-checkout-session', {
-    body: {
+  const res = await fetch('/api/create-checkout-session', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({
       formalityId,
       amount,
       currency,
@@ -22,10 +24,13 @@ export const createCheckoutSession = async ({ formalityId, amount, currency = 'e
       priceId,
       successPath: `/checkout/success?formalityId=${formalityId}`,
       cancelPath: `/checkout/cancel?formalityId=${formalityId}`,
-    },
+    }),
   });
-  if (error) throw error;
-  return data; // expected: { url, sessionId }
+  if (!res.ok) {
+    const text = await res.text();
+    throw new Error(text || 'Failed to create checkout session');
+  }
+  return await res.json(); // { url, sessionId }
 };
 
 export const recordPaymentLink = async ({ formalityId, sessionId, url, amount, currency, customerEmail }) => {

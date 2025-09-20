@@ -18,8 +18,10 @@ const CheckoutSuccess = () => {
   const formality = formalities.find(f => f.id === formalityId);
 
   useEffect(() => {
+    // Avoid optimistic update in production to prevent RLS/permission issues.
+    if (!import.meta.env.DEV) return;
     if (formality && formality.status === 'pending_payment') {
-      // Move to formalist processing optimistically; webhook will also enforce
+      // In dev, optimistically move to processing; Stripe webhook will enforce in prod.
       updateFormality(formality.id, { status: 'formalist_processing' });
     }
   }, [formality, updateFormality]);
