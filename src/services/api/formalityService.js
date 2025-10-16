@@ -110,7 +110,9 @@ export const updateFormalityInDB = async (id, updates, user) => {
         subject: notificationSubject,
         message: notificationMessage,
         uploader: user,
-        adminEmails: recipientEmails
+        adminEmails: recipientEmails,
+        template: 'status_change',
+        meta: { oldStatus: oldFormality.status, newStatus: updates.status || updatedFormality.status }
       });
     }
 

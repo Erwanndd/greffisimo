@@ -102,7 +102,7 @@ export default async function handler(req: any, res: any) {
                 template: 'status_change',
                 actionUrl,
                 actionLabel: 'Accéder au dossier',
-                meta: { oldStatus: oldStatus || 'pending_payment' },
+                meta: { oldStatus: oldStatus || 'pending_payment', newStatus: 'formalist_processing' },
               },
             });
           }

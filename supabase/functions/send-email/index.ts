@@ -35,6 +35,9 @@ Deno.serve(async (req) => {
     if (!recipients.length) throw new Error('No recipients provided');
 
     const PUBLIC_APP_URL = Deno.env.get('PUBLIC_APP_URL') || '';
+    const baseLink = (formality?.id && PUBLIC_APP_URL)
+      ? `${PUBLIC_APP_URL.replace(/\/$/, '')}/formality/${formality.id}`
+      : '';
 
     const escapeHtml = (s: string) => s
       .replace(/&/g, '&amp;')
@@ -43,9 +46,45 @@ Deno.serve(async (req) => {
       .replace(/"/g, '&quot;')
       .replace(/'/g, '&#039;');
 
-    const fmtAmount = (amount?: number, currency?: string) => {
-      if (!amount) return '';
-      try { return `${(amount / 100).toFixed(2)} ${(currency || 'EUR').toUpperCase()}` } catch { return '' }
+    const statusMap: Record<string, { label: string; color: string }> = {
+      pending_payment: { label: 'En attente de paiement', color: '#F59E0B' },
+      formalist_processing: { label: 'Traitement par le formaliste', color: '#8B5CF6' },
+      greffe_processing: { label: 'Traitement par le greffe', color: '#6366F1' },
+      validated: { label: 'Dossier validé', color: '#10B981' },
+    };
+
+    const formatStatusLabel = (status: string) => statusMap[status]?.label || status;
+
+    const getStatusBadge = (status: string) => {
+      const statusInfo = statusMap[status] || { label: status, color: '#6B7280' };
+      return `<span style="display:inline-block;background:${statusInfo.color}20;color:${statusInfo.color};border:1px solid ${statusInfo.color}40;padding:4px 12px;border-radius:16px;font-size:12px;font-weight:600">${escapeHtml(statusInfo.label)}</span>`;
+    };
+
+    const formatDate = () => {
+      return new Date().toLocaleDateString('fr-FR', {
+        weekday: 'long',
+        year: 'numeric',
+        month: 'long',
+        day: 'numeric',
+      });
+    };
+
+    const describeTribunal = (formalityObj?: any) => {
+      const rawName = formalityObj?.tribunal?.name?.trim();
+      if (!rawName) return 'greffe du tribunal de commerce compétent';
+      const lower = rawName.toLowerCase();
+      if (lower.includes('greffe')) return rawName;
+      if (lower.includes('tribunal')) return `greffe du ${rawName}`;
+      return `greffe du tribunal de commerce de ${rawName}`;
+    };
+
+    const formatFormalistReference = (formalist?: any) => {
+      if (!formalist) return '';
+      const parts = [formalist.first_name, formalist.last_name]
+        .filter((part: unknown) => typeof part === 'string' && part.trim().length > 0)
+        .map((part: string) => part.trim());
+      if (!parts.length) return '';
+      return `Me ${parts.join(' ')}`;
     };
 
     const renderButton = (url?: string, label?: string, color = '#3B82F6') => {
@@ -53,30 +92,6 @@ Deno.serve(async (req) => {
       const safeLabel = escapeHtml(label || 'Ouvrir');
       return `<a href="${url}" target="_blank" style="display:inline-block;background:${color};color:#fff;text-decoration:none;border-radius:8px;padding:14px 28px;font-weight:600;margin-top:20px;box-shadow:0 4px 6px rgba(0,0,0,0.1);transition:all 0.2s">${safeLabel}</a>`;
     };
-
-    const getStatusBadge = (status: string) => {
-      const statusMap: Record<string, {label: string, color: string}> = {
-        'pending_payment': { label: 'En attente de paiement', color: '#F59E0B' },
-        'formalist_processing': { label: 'Traitement par le formaliste', color: '#8B5CF6' },
-        'greffe_processing': { label: 'Traitement par le greffe', color: '#6366F1' },
-        'validated': { label: 'Dossier validé', color: '#10B981' },
-      };
-      const statusInfo = statusMap[status] || { label: status, color: '#6B7280' };
-      return `<span style="display:inline-block;background:${statusInfo.color}20;color:${statusInfo.color};border:1px solid ${statusInfo.color}40;padding:4px 12px;border-radius:16px;font-size:12px;font-weight:600">${escapeHtml(statusInfo.label)}</span>`;
-    };
-
-    const formatDate = () => {
-      return new Date().toLocaleDateString('fr-FR', { 
-        weekday: 'long', 
-        year: 'numeric', 
-        month: 'long', 
-        day: 'numeric' 
-      });
-    };
-
-    const baseLink = (formality?.id && PUBLIC_APP_URL)
-      ? `${PUBLIC_APP_URL.replace(/\/$/,'')}/formality/${formality.id}`
-      : '';
 
     const headerSection = `
       <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background:#F9FAFB;border-radius:0 0 12px 12px;border-top:1px solid #E5E7EB">
@@ -144,207 +159,245 @@ Deno.serve(async (req) => {
         </table>
       </div>` : '';
 
-    const templates: Record<string, (p: any) => string> = {
-      // Template 1: Payment Link
-      payment_link: ({ message, actionUrl, meta }: any) => {
-        const amountStr = fmtAmount(meta?.amount, meta?.currency);
-        return `
-        <div style="font-family:'Segoe UI',Tahoma,Geneva,Verdana,sans-serif;background:#F3F4F6;padding:40px 20px">
-          <table role="presentation" width="100%" style="max-width:600px;margin:0 auto;background:#fff;border-radius:12px;box-shadow:0 4px 6px rgba(0,0,0,0.07);overflow:hidden">
-            ${headerSection}
-            <tr>
-              <td style="padding:40px 32px">
-                
-                <h1 style="font-size:24px;color:#111827;font-weight:700;text-align:center;margin:0 0 8px 0">
-                  Votre lien de paiement est prêt
-                </h1>
-                <p style="font-size:16px;color:#6B7280;text-align:center;margin:0 0 32px 0">
-                  Procédez au règlement pour démarrer le traitement de votre formalité
-                </p>
-                
-                <div style="background:linear-gradient(135deg, #DBEAFE 0%, #E0E7FF 100%);border-radius:8px;padding:24px;text-align:center;border:1px solid #93C5FD40">
-                  <div style="font-size:14px;color:#6B7280;margin-bottom:8px">Montant à régler</div>
-                  <div style="font-size:32px;color:#1E40AF;font-weight:700">${amountStr || 'Montant à confirmer'}</div>
-                  ${renderButton(actionUrl, 'Procéder au paiement', '#10B981')}
-                </div>
-                
-                ${message ? `
-                <div style="margin-top:24px;padding:16px;background:#FEF3C7;border-radius:8px;border-left:4px solid #F59E0B">
-                  <div style="font-size:14px;color:#92400E">📌 Note de votre formaliste</div>
-                  <div style="font-size:14px;color:#78350F;margin-top:8px">${escapeHtml(message)}</div>
-                </div>` : ''}
-                
-                ${formalityDetailsSection(false)}
-                
-                <div style="margin-top:32px;padding:20px;background:#F0F9FF;border-radius:8px;border:1px solid #BAE6FD40">
-                  <div style="font-size:14px;color:#075985;line-height:1.6">
-                    <div style="font-weight:600;margin-bottom:8px">🔒 Paiement sécurisé</div>
-                    <div>Votre paiement est traité de manière sécurisée via Stripe. Une fois le règlement effectué, votre formalité sera immédiatement prise en charge par notre équipe.</div>
-                  </div>
-                </div>
-              </td>
-            </tr>
-            ${footerSection}
-          </table>
-        </div>`;
-      },
+    const wrapEmail = (content: string) => `
+      <div style="font-family:'Segoe UI',Tahoma,Geneva,Verdana,sans-serif;background:#F3F4F6;padding:40px 20px">
+        <table role="presentation" width="100%" style="max-width:600px;margin:0 auto;background:#fff;border-radius:12px;box-shadow:0 4px 6px rgba(0,0,0,0.07);overflow:hidden">
+          ${headerSection}
+          <tr>
+            <td style="padding:40px 32px">
+              ${content}
+            </td>
+          </tr>
+          ${footerSection}
+        </table>
+      </div>`;
 
-      // Template 2: Status Change
-      status_change: ({ message, formality }: any) => {
-        const oldStatus = meta?.oldStatus || '';
-        const newStatus = formality?.status || '';
-        return `
-        <div style="font-family:'Segoe UI',Tahoma,Geneva,Verdana,sans-serif;background:#F3F4F6;padding:40px 20px">
-          <table role="presentation" width="100%" style="max-width:600px;margin:0 auto;background:#fff;border-radius:12px;box-shadow:0 4px 6px rgba(0,0,0,0.07);overflow:hidden">
-            ${headerSection}
-            <tr>
-              <td style="padding:40px 32px">
-                <h1 style="font-size:24px;color:#111827;font-weight:700;text-align:center;margin:0 0 8px 0">
-                  Mise à jour du statut de votre dossier
-                </h1>
-                <p style="font-size:16px;color:#6B7280;text-align:center;margin:0 0 32px 0">
-                  Le statut de votre formalité a été modifié
-                </p>
-                
-                <div style="background:#F9FAFB;border-radius:8px;padding:24px">
-                  <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:16px">
-                    ${oldStatus ? `
-                    <div style="text-align:center;flex:1">
-                      <div style="font-size:12px;color:#6B7280;margin-bottom:8px">Statut précédent</div>
-                      ${getStatusBadge(oldStatus)}
-                    </div>
-                    <div style="font-size:24px;color:#9CA3AF">→</div>` : ''}
-                    <div style="text-align:center;flex:1">
-                      <div style="font-size:12px;color:#6B7280;margin-bottom:8px">Nouveau statut</div>
-                      ${getStatusBadge(newStatus)}
-                    </div>
-                  </div>
-                </div>
-                
-                ${message ? `
-                <div style="margin-top:24px;padding:16px;background:#F3F4F6;border-radius:8px">
-                  <div style="font-size:14px;color:#6B7280;line-height:1.6">${escapeHtml(message)}</div>
-                </div>` : ''}
-                
-                ${formalityDetailsSection(false)}
-                
-                <div style="margin-top:32px;text-align:center">
-                  <div style="font-size:14px;color:#6B7280;margin-bottom:16px">
-                    Suivez l'évolution de votre dossier en temps réel
-                  </div>
-                  ${renderButton(baseLink, 'Consulter mon dossier', '#3B82F6')}
-                </div>
-                
-                <div style="margin-top:32px;padding:16px;background:#EFF6FF;border-radius:8px;border-left:4px solid #3B82F6">
-                  <div style="font-size:13px;color:#1E40AF;line-height:1.6">
-                    <strong>Prochaines étapes :</strong> Notre équipe continue le traitement de votre dossier. Vous recevrez une notification à chaque nouvelle étape importante.
-                  </div>
-                </div>
-              </td>
-            </tr>
-            ${footerSection}
-          </table>
-        </div>`;
-      },
+    const buildLetterEmail = ({
+      paragraphs,
+      closing = [],
+      linkUrl,
+      linkLabel,
+      buttonColor = '#3B82F6',
+      includeFormalityDetails = false,
+      showStatus = false,
+    }: {
+      paragraphs: string[];
+      closing?: string[];
+      linkUrl?: string;
+      linkLabel?: string;
+      buttonColor?: string;
+      includeFormalityDetails?: boolean;
+      showStatus?: boolean;
+    }) => {
+      const safeParagraphs = (paragraphs || [])
+        .filter((p) => typeof p === 'string' && p.trim().length > 0)
+        .map((p) => p.trim());
+      const safeClosing = (closing || [])
+        .filter((p) => typeof p === 'string' && p.trim().length > 0)
+        .map((p) => p.trim());
 
-      // Template 3: General Modifications
-      modification: ({ message, actionUrl, modificationType }: any) => {
-        const typeIcons: Record<string, string> = {
-          document_added: '📎',
-          document_removed: '🗑️',
-          message_received: '💬',
-          client_added: '👥',
-          formality_created: '🎉',
-          formality_updated: '✏️',
-          default: '📝'
-        };
-        const icon = typeIcons[modificationType || 'default'] || typeIcons.default;
-        
-        return `
-        <div style="font-family:'Segoe UI',Tahoma,Geneva,Verdana,sans-serif;background:#F3F4F6;padding:40px 20px">
-          <table role="presentation" width="100%" style="max-width:600px;margin:0 auto;background:#fff;border-radius:12px;box-shadow:0 4px 6px rgba(0,0,0,0.07);overflow:hidden">
-            ${headerSection}
-            <tr>
-              <td style="padding:40px 32px">
-                <div style="text-align:center;margin-bottom:32px">
-                  <div style="width:80px;height:80px;background:linear-gradient(135deg, #8B5CF6 0%, #7C3AED 100%);border-radius:50%;display:flex;align-items:center;justify-content:center;margin:0 auto;box-shadow:0 8px 16px rgba(139,92,246,0.2)">
-                    <span style="font-size:36px">${icon}</span>
-                  </div>
-                </div>
-                
-                <h1 style="font-size:24px;color:#111827;font-weight:700;text-align:center;margin:0 0 24px 0">
-                  Mise à jour de votre dossier
-                </h1>
-                
-                <div style="background:#F9FAFB;border-radius:8px;padding:20px">
-                  <div style="font-size:15px;color:#374151;line-height:1.6">
-                    ${escapeHtml(message || 'Votre dossier a été mis à jour.')}
-                  </div>
-                  ${uploader ? `
-                  <div style="margin-top:12px;padding-top:12px;border-top:1px solid #E5E7EB">
-                    <span style="font-size:13px;color:#6B7280">Par : </span>
-                    <span style="font-size:13px;color:#374151;font-weight:600">${escapeHtml(uploader.first_name || '')} ${escapeHtml(uploader.last_name || '')}</span>
-                    <span style="font-size:13px;color:#9CA3AF"> • ${formatDate()}</span>
-                  </div>` : ''}
-                </div>
-                
-                ${formalityDetailsSection(true)}
-                
-                ${actionUrl ? `
-                <div style="margin-top:32px;text-align:center">
-                  ${renderButton(actionUrl, actionLabel || 'Voir les détails', '#8B5CF6')}
-                </div>` : baseLink ? `
-                <div style="margin-top:32px;text-align:center">
-                  ${renderButton(baseLink, 'Accéder au dossier', '#8B5CF6')}
-                </div>` : ''}
-                
-                <div style="margin-top:32px;padding:16px;background:#F5F3FF;border-radius:8px;border:1px solid #8B5CF640">
-                  <div style="font-size:13px;color:#5B21B6;line-height:1.6">
-                    <strong>💡 Bon à savoir :</strong> Toutes les modifications apportées à votre dossier sont tracées et sécurisées. Vous pouvez consulter l'historique complet dans votre espace client.
-                  </div>
-                </div>
-              </td>
-            </tr>
-            ${footerSection}
-          </table>
-        </div>`;
-      },
+      const paragraphsHtml = safeParagraphs
+        .map((p) => `<p style="font-size:16px;color:#111827;line-height:1.7;margin:0 0 16px 0">${escapeHtml(p)}</p>`)
+        .join('');
+      const closingHtml = safeClosing
+        .map((p) => `<p style="font-size:16px;color:#111827;line-height:1.7;margin:0 0 16px 0">${escapeHtml(p)}</p>`)
+        .join('');
 
-      // Fallback to modification template for generic notifications
-      generic: (params: any) => templates.modification({ ...params, modificationType: 'default' })
+      const linkHtml = linkUrl
+        ? `<p style="font-size:16px;color:#111827;line-height:1.7;margin:0 0 16px 0">Lien : <a href="${linkUrl}" style="color:#2563EB;text-decoration:none">${escapeHtml(linkUrl)}</a></p>`
+        : '';
+      const buttonHtml = linkUrl && linkLabel
+        ? `<div style="margin-top:24px">${renderButton(linkUrl, linkLabel, buttonColor)}</div>`
+        : '';
+
+      const detailsHtml = includeFormalityDetails ? formalityDetailsSection(showStatus) : '';
+      const html = wrapEmail(`${paragraphsHtml}${linkHtml}${buttonHtml}${closingHtml}${detailsHtml}`);
+      const textLines = [
+        ...safeParagraphs,
+        ...(linkUrl ? [`Lien : ${linkUrl}`] : []),
+        ...safeClosing,
+      ];
+      const text = textLines.join('\n\n');
+      return { html, text };
     };
 
-    // Automatically select template based on context
+    type TemplateParams = {
+      message: string;
+      actionUrl?: string;
+      actionLabel?: string;
+      meta?: any;
+      formality?: any;
+      uploader?: any;
+    };
+
+    type TemplateOutput = {
+      subject?: string;
+      html: string;
+      text?: string;
+    };
+
+    const templates: Record<string, (p: TemplateParams) => TemplateOutput> = {
+      payment_link: ({ actionUrl, actionLabel, formality: formalityParam }: TemplateParams) => {
+        const formalistRef = formatFormalistReference(formalityParam?.formalist) || 'votre formaliste';
+        const tribunalDescription = describeTribunal(formalityParam);
+        const { html, text } = buildLetterEmail({
+          paragraphs: [
+            'Madame, Monsieur,',
+            `Dans le prolongement de l'opération réalisée avec ${formalistRef}, veuillez trouver ci-après le lien de paiement concernant la formalité à réaliser auprès du ${tribunalDescription}.`,
+            'Nous vous remercions par avance pour votre paiement, ce dernier permet de finaliser le dépôt de la formalité auprès du greffe.',
+          ],
+          closing: ['Merci.', "L'Équipe Greffissimo"],
+          linkUrl: actionUrl,
+          linkLabel: actionLabel || 'Payer maintenant',
+          buttonColor: '#10B981',
+          includeFormalityDetails: false,
+          showStatus: false,
+        });
+        return {
+          subject: 'Notification pour paiement',
+          html,
+          text,
+        };
+      },
+
+      status_change: ({ message: statusMessage, actionUrl: statusActionUrl, formality: statusFormality }: TemplateParams) => {
+        const oldStatus = meta?.oldStatus || '';
+        const newStatus = statusFormality?.status || meta?.newStatus || '';
+        const linkForStatus = statusActionUrl || baseLink || '';
+        const tribunalDescription = describeTribunal(statusFormality);
+
+        if (newStatus === 'formalist_processing') {
+          const { html, text } = buildLetterEmail({
+            paragraphs: [
+              'Madame, Monsieur,',
+              'Nous vous confirmons la bonne réception de votre paiement.',
+              `Votre dossier est désormais en cours de traitement par l'un(e) de nos formalistes et sera très prochainement déposé au ${tribunalDescription}.`,
+              'Vous recevrez une notification dès que ce dernier aura été validé par le greffe.',
+            ],
+            closing: ['Merci.', "L'Équipe Greffissimo"],
+            linkUrl: linkForStatus || undefined,
+            linkLabel: linkForStatus ? 'Consulter votre dossier' : undefined,
+            includeFormalityDetails: false,
+            showStatus: false,
+          });
+          return {
+            subject: 'Notification de confirmation de paiement et de traitement de dossier par le formaliste',
+            html,
+            text,
+          };
+        }
+
+        if (newStatus === 'validated') {
+          const { html, text } = buildLetterEmail({
+            paragraphs: [
+              'Madame, Monsieur,',
+              `Nous vous informons que votre dossier a été validé par le ${tribunalDescription}.`,
+              'Merci de vous connecter sur votre espace personnel pour accéder aux documents correspondants.',
+            ],
+            closing: ['Merci.', "L'Équipe Greffissimo"],
+            linkUrl: linkForStatus || undefined,
+            linkLabel: linkForStatus ? 'Accéder à mon espace' : undefined,
+            includeFormalityDetails: false,
+            showStatus: false,
+          });
+          return {
+            subject: 'Notification de dossier validé',
+            html,
+            text,
+          };
+        }
+
+        const infoParagraphs = [
+          'Madame, Monsieur,',
+          oldStatus ? `Statut précédent : ${formatStatusLabel(oldStatus)}` : '',
+          newStatus ? `Nouveau statut : ${formatStatusLabel(newStatus)}` : '',
+          statusMessage || '',
+        ].filter((line) => line && line.trim().length > 0);
+
+        const { html, text } = buildLetterEmail({
+          paragraphs: infoParagraphs,
+          closing: ['Merci.', "L'Équipe Greffissimo"],
+          linkUrl: linkForStatus || undefined,
+          linkLabel: linkForStatus ? 'Consulter mon dossier' : undefined,
+          includeFormalityDetails: true,
+          showStatus: true,
+        });
+
+        return { html, text };
+      },
+
+      modification: ({ message: modificationMessage, actionUrl: modificationActionUrl, actionLabel: modificationActionLabel, uploader: modificationUploader }: TemplateParams) => {
+        const uploaderLine = modificationUploader
+          ? `Par : ${[
+              modificationUploader.first_name,
+              modificationUploader.last_name,
+            ]
+              .filter((part: unknown) => typeof part === 'string' && part.trim().length > 0)
+              .map((part: string) => part.trim())
+              .join(' ')} • ${formatDate()}`
+          : '';
+
+        const { html, text } = buildLetterEmail({
+          paragraphs: [
+            'Madame, Monsieur,',
+            modificationMessage || 'Votre dossier a été mis à jour.',
+            uploaderLine,
+          ],
+          closing: ['Merci.', "L'Équipe Greffissimo"],
+          linkUrl: modificationActionUrl || baseLink || undefined,
+          linkLabel: (modificationActionUrl || baseLink)
+            ? modificationActionLabel || 'Consulter le dossier'
+            : undefined,
+          includeFormalityDetails: true,
+          showStatus: true,
+        });
+
+        return { html, text };
+      },
+
+      generic: (params: TemplateParams) => templates.modification({ ...params }),
+    };
+
     let selectedTemplate = template;
     if (!selectedTemplate) {
-      if (meta?.oldStatus || (message && message.includes('statut'))) {
+      if (meta?.oldStatus || (typeof message === 'string' && message.includes('statut'))) {
         selectedTemplate = 'status_change';
-      } else if (actionUrl && actionUrl.includes('stripe') || meta?.amount) {
+      } else if ((actionUrl && actionUrl.includes('stripe')) || meta?.amount) {
         selectedTemplate = 'payment_link';
       } else {
         selectedTemplate = 'modification';
       }
     }
 
-    const chosen = (selectedTemplate && templates[selectedTemplate]) ? selectedTemplate : 'modification';
-    const html = templates[chosen]({ message, actionUrl, actionLabel, meta, formality, uploader, modificationType: meta?.type });
-    const textFallback = `${(message || '').toString()}${actionUrl ? `\n\nLien: ${actionUrl}` : ''}${formality ? `\n\nFormalité: ${formality.company_name || ''} (#${formality.id})` : ''}`;
+    const templateParams: TemplateParams = { message, actionUrl, actionLabel, meta, formality, uploader };
+    const render = templates[selectedTemplate] || templates.modification;
+    const output = render(templateParams);
+
+    const fallbackTextParts = [
+      typeof message === 'string' ? message : '',
+      actionUrl ? `Lien : ${actionUrl}` : '',
+      formality?.company_name ? `Formalité : ${formality.company_name} (#${formality.id})` : '',
+    ].filter((part) => part && part.trim().length > 0);
+    const fallbackText = fallbackTextParts.join('\n\n') || 'Notification Greffissimo';
+
+    const textContent = output.text && output.text.trim().length > 0 ? output.text : fallbackText;
+    const htmlContent = output.html || wrapEmail(`<p style="font-size:16px;color:#111827;line-height:1.7;margin:0">${escapeHtml(fallbackText)}</p>`);
+    const effectiveSubject = output.subject || subject || 'Notification Greffissimo';
 
     const payload: Record<string, unknown> = {
       personalizations: [
         {
           to: recipients.map((email: string) => ({ email })),
-          subject: subject || 'Notification Greffissimo',
+          subject: effectiveSubject,
         },
       ],
       from: fromName ? { email: fromEmail, name: fromName } : { email: fromEmail },
       content: [
-        { type: 'text/plain', value: textFallback },
-        { type: 'text/html', value: html },
+        { type: 'text/plain', value: textContent },
+        { type: 'text/html', value: htmlContent },
       ],
     };
 
-    // Optional reply-to support
     const REPLY_TO = Deno.env.get('SENDGRID_REPLY_TO_EMAIL');
     if (REPLY_TO && emailRegex.test(REPLY_TO)) {
       (payload as any).reply_to = { email: REPLY_TO };
@@ -353,7 +406,7 @@ Deno.serve(async (req) => {
     const sgRes = await fetch('https://api.sendgrid.com/v3/mail/send', {
       method: 'POST',
       headers: {
-        'Authorization': `Bearer ${SENDGRID_API_KEY}`,
+        Authorization: `Bearer ${SENDGRID_API_KEY}`,
         'Content-Type': 'application/json',
       },
       body: JSON.stringify(payload),
@@ -371,6 +424,7 @@ Deno.serve(async (req) => {
       status: 200,
     });
   } catch (err) {
+    console.error('[supabase/send-email] error', err);
     return new Response(JSON.stringify({ error: String(err?.message || err) }), {
       headers: { 'Content-Type': 'application/json', ...corsHeaders },
       status: 400,
