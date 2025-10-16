@@ -7,8 +7,7 @@ export const fetchAllData = async (user) => {
         formalist:profiles!formalist_id(*),
         clients:formality_clients!formality_id(profile:profiles!client_id(*)),
         creator:profiles!created_by(*),
-        tribunal:tribunals(*),
-        tariff:tariffs(*)
+        tribunal:tribunals(*)
     `).order('created_at', { ascending: false });
 
     let relevantFormalityIds = [];

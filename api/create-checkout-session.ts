@@ -14,28 +14,44 @@ export default async function handler(req: any, res: any) {
   if (req.method !== 'POST') {
     res.statusCode = 405;
     res.setHeader('Allow', 'POST');
-    res.end('Method Not Allowed');
+    res.setHeader('Content-Type', 'application/json');
+    res.end(JSON.stringify({ error: 'Method Not Allowed' }));
     return;
   }
 
   try {
     const raw = await readRawBody(req);
     const body = JSON.parse(raw.toString() || '{}');
+    console.log('[api/create-checkout-session] incoming body', body);
 
     const {
       formalityId,
-      amount,
+      formalityPrices,
       currency = 'eur',
       customerEmail,
-      priceId,
       successPath,
       cancelPath,
     } = body || {};
 
+    if (!formalityId) {
+      res.statusCode = 400;
+      res.setHeader('Content-Type', 'application/json');
+      res.end(JSON.stringify({ error: 'Missing formalityId' }));
+      return;
+    }
+
+    if (!formalityPrices || typeof formalityPrices !== 'object') {
+      res.statusCode = 400;
+      res.setHeader('Content-Type', 'application/json');
+      res.end(JSON.stringify({ error: 'Missing formality pricing information' }));
+      return;
+    }
+
     const stripeKey = process.env.STRIPE_SECRET_KEY;
     if (!stripeKey) {
       res.statusCode = 500;
-      res.end('Missing STRIPE_SECRET_KEY');
+      res.setHeader('Content-Type', 'application/json');
+      res.end(JSON.stringify({ error: 'Missing STRIPE_SECRET_KEY' }));
       return;
     }
 
@@ -45,16 +61,52 @@ export default async function handler(req: any, res: any) {
     const publicBase = process.env.PUBLIC_BASE_URL;
     const origin = originHeader || publicBase || 'http://localhost:5173';
 
-    const lineItems = priceId
-      ? [{ price: String(priceId), quantity: 1 }]
-      : [{
+    const normalizePriceId = (value: unknown) => {
+      if (typeof value !== 'string') return null;
+      const trimmed = value.trim();
+      return trimmed.startsWith('price_') ? trimmed : null;
+    };
+
+    const makeLineItems = () => {
+      const parts = [
+        { key: 'formality', fallbackName: `Formalité #${formalityId}` },
+        { key: 'urgency', fallbackName: 'Option urgence' },
+        { key: 'taxreg', fallbackName: 'Option enregistrement fiscal' },
+      ] as const;
+
+      const items: Stripe.Checkout.SessionCreateParams.LineItem[] = [];
+
+      for (const part of parts) {
+        const pricing = (formalityPrices as Record<string, any>)[part.key];
+        if (!pricing) continue;
+        const { amount, label } = pricing;
+        const priceId = normalizePriceId(pricing.priceId);
+        if (priceId) {
+          items.push({ price: priceId, quantity: 1 });
+          continue;
+        }
+        const numericAmount = Number(amount);
+        if (!Number.isFinite(numericAmount) || numericAmount <= 0) continue;
+        items.push({
           price_data: {
             currency,
-            product_data: { name: `Formalité #${formalityId}` },
-            unit_amount: Number(amount),
+            product_data: { name: String(label || part.fallbackName) },
+            unit_amount: Math.round(numericAmount),
           },
           quantity: 1,
-        }];
+        });
+      }
+
+      if (!items.length) {
+        const err = new Error('Aucun tarif valide pour la formalité');
+        (err as any).statusCode = 400;
+        throw err;
+      }
+
+      return items;
+    };
+
+    const lineItems = makeLineItems();
 
     const appendSessionId = (base?: string) => {
       const path = base || '/';
@@ -68,15 +120,21 @@ export default async function handler(req: any, res: any) {
       success_url: appendSessionId(successPath),
       cancel_url: `${origin}${cancelPath || '/'}`,
       customer_email: customerEmail,
-      metadata: { formalityId: String(formalityId ?? '') },
+      metadata: {
+        formalityId: String(formalityId ?? ''),
+        pricing: JSON.stringify(formalityPrices),
+      },
     });
 
     res.statusCode = 200;
     res.setHeader('Content-Type', 'application/json');
     res.end(JSON.stringify({ url: session.url, sessionId: session.id }));
   } catch (err: any) {
-    res.statusCode = 400;
+    console.error('[api/create-checkout-session] error', err);
+    const status = typeof err?.statusCode === 'number' ? err.statusCode : 500;
+    const message = err?.message || 'Unexpected error while creating checkout session';
+    res.statusCode = status;
     res.setHeader('Content-Type', 'application/json');
-    res.end(JSON.stringify({ error: err?.message || 'Bad Request' }));
+    res.end(JSON.stringify({ error: message }));
   }
 }

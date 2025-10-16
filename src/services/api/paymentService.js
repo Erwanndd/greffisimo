@@ -12,11 +12,16 @@ export const hasPaidPaymentForFormality = async (formalityId) => {
   return Array.isArray(data) && data.length > 0;
 };
 
-export const createCheckoutSession = async ({ formalityPrices, currency = 'eur', customerEmail }) => {
+export const createCheckoutSession = async ({ formalityId, formalityPrices, currency = 'eur', customerEmail }) => {
+  console.log('create checkout session pricing', formalityPrices);
+  if (!formalityId) throw new Error('Identifiant de formalité manquant');
+  if (!formalityPrices || typeof formalityPrices !== 'object') throw new Error('Données tarifaires invalides');
+
   const res = await fetch('/api/create-checkout-session', {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({
+      formalityId,
       formalityPrices,
       currency,
       customerEmail,
@@ -25,8 +30,20 @@ export const createCheckoutSession = async ({ formalityPrices, currency = 'eur',
     }),
   });
   if (!res.ok) {
-    const text = await res.text();
-    throw new Error(text || 'Failed to create checkout session');
+    let message = 'Failed to create checkout session';
+    try {
+      const contentType = res.headers.get('content-type') || '';
+      if (contentType.includes('application/json')) {
+        const data = await res.json();
+        message = data?.error || data?.message || message;
+      } else {
+        const text = await res.text();
+        message = text || message;
+      }
+    } catch (parseErr) {
+      console.warn('Unable to parse checkout error response', parseErr);
+    }
+    throw new Error(`${message} (HTTP ${res.status})`);
   }
   return await res.json(); // { url, sessionId }
 };
@@ -50,6 +67,12 @@ export const hasPaymentLinkForFormality = async (formalityId) => {
     .limit(1);
   handleSupabaseError({ error, customMessage: 'checking payment link presence' });
   return Array.isArray(data) && data.length > 0;
+};
+
+const sanitizeStripePriceId = (maybeId) => {
+  if (typeof maybeId !== 'string') return null;
+  const trimmed = maybeId.trim();
+  return trimmed.startsWith('price_') ? trimmed : null;
 };
 
 export const computeFormalityPrices = async (formalityType, isUrgent, requiresTaxRegistration) => {
@@ -85,15 +108,18 @@ export const computeFormalityPrices = async (formalityType, isUrgent, requiresTa
 
   return {
     formality: {
-      priceId: basePriceId,
+      label: formalityType,
+      priceId: sanitizeStripePriceId(basePriceId),
       amount: basePrice,
     },
     urgency: {
-      priceId: urgencyPriceId,
+      label: 'Option urgence',
+      priceId: sanitizeStripePriceId(urgencyPriceId),
       amount: urgencyPrice,
     },
     taxreg: {
-      priceId: taxRegPriceId,
+      label: 'Option enregistrement fiscal',
+      priceId: sanitizeStripePriceId(taxRegPriceId),
       amount: taxRegPrice,
     },
     total: (basePrice * 1.2) + urgencyPrice + taxRegPrice,

@@ -2,20 +2,30 @@ import React from 'react';
 import { Button } from '@/components/ui/button';
 import { useToast } from '@/components/ui/use-toast';
 import { CreditCard } from 'lucide-react';
-import { createCheckoutSession } from '@/services/api/paymentService';
-import { getStripePriceIdForFormality } from '@/config/stripePrices';
+import { createCheckoutSession, computeFormalityPrices } from '@/services/api/paymentService';
 
 const Payment = ({ formality }) => {
   const { toast } = useToast();
 
   const handlePayment = async () => {
     try {
-      const priceId = getStripePriceIdForFormality(formality);
-      if (!priceId) {
-        toast({ title: 'Configuration manquante', description: 'VITE_STRIPE_PRICE_ID_DEFAULT non défini.', variant: 'destructive' });
+      const formalityPrices = await computeFormalityPrices(
+        formality?.type,
+        Boolean(formality?.is_urgent),
+        Boolean(formality?.requires_tax_registration)
+      );
+
+      if (!formalityPrices || !formalityPrices.total) {
+        toast({ title: 'Tarif indisponible', description: 'Impossible de calculer le tarif de la formalité.', variant: 'destructive' });
         return;
       }
-      const { url } = await createCheckoutSession({ formalityId: formality.id, amount: formality?.amount, currency: 'eur', customerEmail: undefined, priceId });
+
+      const { url } = await createCheckoutSession({
+        formalityId: formality.id,
+        formalityPrices,
+        currency: 'eur',
+        customerEmail: undefined,
+      });
       if (!url) throw new Error('URL de paiement indisponible');
       window.location.href = url;
     } catch (error) {

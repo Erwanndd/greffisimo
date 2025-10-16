@@ -1,4 +1,4 @@
-import React, { useMemo, useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -13,34 +13,65 @@ const PaymentLinkDialog = ({ open, onOpenChange, formality, defaultEmail, onEmai
   const [sending, setSending] = useState(false);
   const [generatedUrl, setGeneratedUrl] = useState('');
   const [generatedSessionId, setGeneratedSessionId] = useState('');
+  const [priceBreakdown, setPriceBreakdown] = useState(null);
+  const [loadingPrices, setLoadingPrices] = useState(false);
   const isValidEmail = (val) => typeof val === 'string' && /.+@.+\..+/.test(val);
-  
-  // Calculate amount based on formality properties
-  const amount = useMemo(() => calculateFormalityAmount(formality), [formality]);
-  const priceBreakdown = useMemo(() => {
-    if (!formality) return null;
-    return computeFormalityPrices(
-      formality.type,
-      formality.is_urgent || false,
-      formality.requires_tax_registration || false
-    );
-  }, [formality]);
-  
+
+  useEffect(() => {
+    let active = true;
+    if (!formality) {
+      setPriceBreakdown(null);
+      return () => {
+        active = false;
+      };
+    }
+
+    (async () => {
+      try {
+        setLoadingPrices(true);
+        const prices = await computeFormalityPrices(
+          formality.type,
+          Boolean(formality.is_urgent),
+          Boolean(formality.requires_tax_registration)
+        );
+        if (active) setPriceBreakdown(prices);
+      } catch (err) {
+        console.error('Erreur lors du calcul du tarif:', err);
+        if (active) setPriceBreakdown(null);
+        toast({ title: 'Tarif indisponible', description: "Impossible de récupérer le tarif de la formalité.", variant: 'destructive' });
+      } finally {
+        if (active) setLoadingPrices(false);
+      }
+    })();
+
+    return () => {
+      active = false;
+    };
+  }, [formality, toast]);
+
+  const totalAmount = priceBreakdown?.total || 0;
   const currency = 'eur';
 
   const handleGenerate = async () => {
     try {
+      if (loadingPrices) return;
+      if (!priceBreakdown) {
+        toast({ title: 'Tarif manquant', description: 'Veuillez réessayer une fois le tarif chargé.', variant: 'destructive' });
+        return;
+      }
       setLoading(true);
-      console.log('[PaymentLinkDialog] Generating link', { formalityId: formality?.id, amount, currency, email });
-      
+
+      console.log('[PaymentLinkDialog] price breakdown', priceBreakdown);
       // Use dynamic pricing (no priceId needed)
       const { url, sessionId } = await createCheckoutSession({ 
+        formalityId: formality.id,
         formalityPrices: priceBreakdown, 
+        currency,
         customerEmail: email, 
       });
       
       try {
-        await recordPaymentLink({ formalityId: formality.id, sessionId, url, amount, currency, customerEmail: email });
+        await recordPaymentLink({ formalityId: formality.id, sessionId, url, amount: totalAmount, currency, customerEmail: email });
       } catch (e) {
         console.warn('Impossible d\'enregistrer le lien de paiement:', e);
       }
@@ -79,10 +110,10 @@ const PaymentLinkDialog = ({ open, onOpenChange, formality, defaultEmail, onEmai
         template: 'payment_link',
         actionUrl: generatedUrl,
         actionLabel: 'Payer maintenant',
-        meta: { amount, currency }
+        meta: { amount: totalAmount, currency }
       });
       toast({ title: 'Lien envoyé', description: `Le lien de paiement a été envoyé à ${email}.` });
-      onEmailSent && onEmailSent({ url: generatedUrl, sessionId: generatedSessionId, email, amount, currency });
+      onEmailSent && onEmailSent({ url: generatedUrl, sessionId: generatedSessionId, email, amount: totalAmount, currency });
     } catch (err) {
       console.error('Erreur envoi email:', err);
       toast({ title: 'Erreur', description: err.message || "Impossible d'envoyer l'e-mail.", variant: 'destructive' });
@@ -142,7 +173,7 @@ const PaymentLinkDialog = ({ open, onOpenChange, formality, defaultEmail, onEmai
         </div>
         <DialogFooter>
           <Button variant="ghost" onClick={() => onOpenChange(false)} className="text-gray-300">Fermer</Button>
-          <Button onClick={handleGenerate} disabled={loading} className="bg-gradient-to-r from-blue-500 to-purple-500">
+          <Button onClick={handleGenerate} disabled={loading || loadingPrices} className="bg-gradient-to-r from-blue-500 to-purple-500">
             {loading ? 'Génération…' : 'Générer le lien'}
           </Button>
           <Button onClick={handleSendEmail} disabled={!generatedUrl || sending || !isValidEmail(email)} className="bg-gradient-to-r from-green-500 to-teal-500">
