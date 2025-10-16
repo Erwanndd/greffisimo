@@ -77,13 +77,14 @@ const sanitizeStripePriceId = (maybeId) => {
 
 export const computeFormalityPrices = async (formalityType, isUrgent, requiresTaxRegistration) => {
   // Build array of names to fetch: the base type, and optionally urgency/tax reg
+  let formalityName = '';
   if (['Constitution', 'Dépôt des comptes', 'Cession de titres', "Dépôt d'actes"].includes(formalityType)) {
     formalityName = formalityType;
   }
   else {
     formalityName = "Formalité simple";
   }
-  const names = [formalityType];
+  const names = [formalityName];
   if (isUrgent) names.push('Option: Urgence');
   if (requiresTaxRegistration) names.push('Option: Enregistrement fiscal');
 
