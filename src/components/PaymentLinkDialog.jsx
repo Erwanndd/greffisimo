@@ -3,9 +3,8 @@ import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, D
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { useToast } from '@/components/ui/use-toast';
-import { createCheckoutSession, recordPaymentLink } from '@/services/api/paymentService';
+import { createCheckoutSession, recordPaymentLink, computeFormalityPrices } from '@/services/api/paymentService';
 import { sendEmailNotification } from '@/services/NotificationService';
-import { getStripePriceIdForFormality } from '@/config/stripePrices';
 
 const PaymentLinkDialog = ({ open, onOpenChange, formality, defaultEmail, onEmailSent }) => {
   const { toast } = useToast();
@@ -15,19 +14,31 @@ const PaymentLinkDialog = ({ open, onOpenChange, formality, defaultEmail, onEmai
   const [generatedUrl, setGeneratedUrl] = useState('');
   const [generatedSessionId, setGeneratedSessionId] = useState('');
   const isValidEmail = (val) => typeof val === 'string' && /.+@.+\..+/.test(val);
-  const amount = useMemo(() => formality?.tariff?.amount || formality?.amount || 0, [formality]);
+  
+  // Calculate amount based on formality properties
+  const amount = useMemo(() => calculateFormalityAmount(formality), [formality]);
+  const priceBreakdown = useMemo(() => {
+    if (!formality) return null;
+    return computeFormalityPrices(
+      formality.type,
+      formality.is_urgent || false,
+      formality.requires_tax_registration || false
+    );
+  }, [formality]);
+  
   const currency = 'eur';
 
   const handleGenerate = async () => {
     try {
       setLoading(true);
       console.log('[PaymentLinkDialog] Generating link', { formalityId: formality?.id, amount, currency, email });
-      const priceId = getStripePriceIdForFormality(formality);
-      if (!priceId) {
-        throw new Error('Aucun Stripe Price ID par défaut configuré. Définissez VITE_STRIPE_PRICE_ID_DEFAULT.');
-      }
-      console.log('[PaymentLinkDialog] Using priceId', { priceId });
-      const { url, sessionId } = await createCheckoutSession({ formalityId: formality.id, amount, currency, customerEmail: email, priceId });
+      
+      // Use dynamic pricing (no priceId needed)
+      const { url, sessionId } = await createCheckoutSession({ 
+        formalityPrices: priceBreakdown, 
+        customerEmail: email, 
+      });
+      
       try {
         await recordPaymentLink({ formalityId: formality.id, sessionId, url, amount, currency, customerEmail: email });
       } catch (e) {
@@ -37,7 +48,6 @@ const PaymentLinkDialog = ({ open, onOpenChange, formality, defaultEmail, onEmai
       setGeneratedUrl(url);
       setGeneratedSessionId(sessionId);
       console.log('[PaymentLinkDialog] Link generated. Waiting for explicit email send');
-      // Keep dialog open to display and optionally send
     } catch (err) {
       console.error('Erreur génération envoi lien:', err);
       toast({ title: 'Erreur', description: err.message || 'Impossible de générer/envoyer le lien.', variant: 'destructive' });
@@ -90,10 +100,39 @@ const PaymentLinkDialog = ({ open, onOpenChange, formality, defaultEmail, onEmai
             Aucun paiement Stripe enregistré pour cette formalité. Envoyez le lien de paiement au client.
           </DialogDescription>
         </DialogHeader>
-        <div className="space-y-3">
+        <div className="space-y-4">
           <label className="text-sm text-gray-300">Adresse e-mail du client</label>
           <Input value={email} onChange={(e) => setEmail(e.target.value)} placeholder="client@example.com" className="bg-white/5 border-white/20 text-white" />
-          {/* Prix calculé côté serveur via Stripe Price ID par défaut */}
+          
+          {/* Price breakdown display */}
+          {priceBreakdown && (
+            <div className="p-4 bg-white/5 border border-white/10 rounded-lg space-y-2">
+              <h4 className="text-sm font-semibold text-white mb-2">Détail du tarif</h4>
+              <div className="space-y-1 text-sm">
+                <div className="flex justify-between text-gray-300">
+                  <span>Formalité ({formality.type})</span>
+                  <span>{priceBreakdown.formality.amount}</span>
+                </div>
+                {formality.is_urgent && (
+                  <div className="flex justify-between text-gray-300">
+                    <span>Option urgence</span>
+                    <span>{priceBreakdown.urgency.amount}</span>
+                  </div>
+                )}
+                {formality.requires_tax_registration && (
+                  <div className="flex justify-between text-gray-300">
+                    <span>Enregistrement fiscal</span>
+                    <span>{priceBreakdown.taxreg.amount}</span>
+                  </div>
+                )}
+                <div className="border-t border-white/10 pt-2 mt-2 flex justify-between font-semibold text-white">
+                  <span>Total</span>
+                  <span>{priceBreakdown.total}</span>
+                </div>
+              </div>
+            </div>
+          )}
+          
           {generatedUrl && (
             <div className="mt-2 p-2 bg-white/5 border border-white/10 rounded text-sm">
               <div className="text-gray-300 mb-1">Lien de paiement généré:</div>
