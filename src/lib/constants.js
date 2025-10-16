@@ -15,7 +15,6 @@ export const formalityTypes = [
   'Liquidation',
   'Autres modifications statutaires',
   'Dépôt des comptes',
-  'Cession ou donation de titres',
   'Mise à jour des bénéficiaires effectifs',
   'Pacte Dutreil-transmission',
   "Convention d'animation",

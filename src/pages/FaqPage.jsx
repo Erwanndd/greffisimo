@@ -1,6 +1,5 @@
 import React from 'react';
 import Layout from '@/components/Layout';
-import { FileText, Clock, Shield } from 'lucide-react';
 
 const faqs = [
   {
@@ -53,39 +52,6 @@ export default function FaqPage() {
         <p className="text-gray-300 mb-8">
           Retrouvez ci-dessous les questions les plus fréquentes à propos des formalités en général et de Greffissimo en particulier.
         </p>
-
-        {/* Nos engagements */}
-        <section className="mb-12">
-          <div className="rounded-xl bg-gradient-to-r from-blue-600 to-blue-500 p-6 shadow-lg border border-white/10">
-            <h2 className="text-2xl font-bold text-white text-center mb-6">Nos engagements</h2>
-            <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-              <div className="flex flex-col items-center text-center bg-white/5 rounded-lg p-4 border border-white/10">
-                <div className="h-16 w-16 rounded-xl bg-white/10 flex items-center justify-center mb-3">
-                  <FileText className="h-8 w-8 text-white" />
-                </div>
-                <p className="text-sm text-white font-medium">
-                  Maîtrise totale des procédures et usages des greffes
-                </p>
-              </div>
-              <div className="flex flex-col items-center text-center bg-white/5 rounded-lg p-4 border border-white/10">
-                <div className="h-16 w-16 rounded-xl bg-white/10 flex items-center justify-center mb-3">
-                  <Clock className="h-8 w-8 text-white" />
-                </div>
-                <p className="text-sm text-white font-medium">
-                  Traitement en urgence des dossiers prioritaires
-                </p>
-              </div>
-              <div className="flex flex-col items-center text-center bg-white/5 rounded-lg p-4 border border-white/10">
-                <div className="h-16 w-16 rounded-xl bg-white/10 flex items-center justify-center mb-3">
-                  <Shield className="h-8 w-8 text-white" />
-                </div>
-                <p className="text-sm text-white font-medium">
-                  Responsabilité civile professionnelle couvrant l’intégralité de l’intervention
-                </p>
-              </div>
-            </div>
-          </div>
-        </section>
 
         <div className="space-y-6">
           {faqs.map((item, idx) => (

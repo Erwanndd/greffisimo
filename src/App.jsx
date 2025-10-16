@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
-import { Menu, X, ArrowRight, Shield, Clock, CheckCircle, Lock, Sparkles, ChevronRight, Play } from 'lucide-react';
+import { Menu, X, ArrowRight, Shield, Clock, CheckCircle, Lock, Sparkles, ChevronRight } from 'lucide-react';
+import { VideoPlayer } from '@/components/ui/video-thumnail-player';
 import { Routes, Route, Navigate, useNavigate } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
 import LoginPage from '@/pages/LoginPage';
@@ -15,7 +16,6 @@ const HomePage = () => {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [scrolled, setScrolled] = useState(false);
   const [activeEngagement, setActiveEngagement] = useState(null);
-  const [isVideoOpen, setIsVideoOpen] = useState(false);
   const navigate = useNavigate();
   const { isAuthenticated, user } = useAuth();
 
@@ -30,16 +30,6 @@ const HomePage = () => {
     window.addEventListener('scroll', handleScroll);
     return () => window.removeEventListener('scroll', handleScroll);
   }, []);
-
-  useEffect(() => {
-    const onKeyDown = (e) => {
-      if (e.key === 'Escape') setIsVideoOpen(false);
-    };
-    if (isVideoOpen) {
-      window.addEventListener('keydown', onKeyDown);
-    }
-    return () => window.removeEventListener('keydown', onKeyDown);
-  }, [isVideoOpen]);
 
   const engagements = [
     { icon: Shield, text: "Maîtrise totale des procédures et usages des greffes", color: "from-blue-400 to-blue-600" },
@@ -114,7 +104,7 @@ const HomePage = () => {
                 onClick={() => navigate(isAuthenticated ? getDashboardPath() : '/login')}
                 className="text-sm font-medium text-slate-400 hover:text-white transition-all duration-300 px-4 py-2 rounded-lg hover:bg-white/5"
               >
-                {isAuthenticated ? 'Tableau de bord' : 'Connexion'}
+                {isAuthenticated ? 'Tableau de bord' : 'Commencer'}
               </button>
             </div>
 
@@ -194,79 +184,28 @@ const HomePage = () => {
               </span>
             </h1>
 
-            <div className="mt-12 flex flex-col items-center gap-5">
-              {/* Voir la vidéo */}
-              <button
-                onClick={() => setIsVideoOpen(true)}
-                className="group relative inline-flex items-center px-8 sm:px-10 py-4 font-semibold text-white rounded-full border border-slate-700/70 bg-white/5 hover:bg-white/10 hover:border-slate-600 transition-all duration-300 shadow-lg"
-              >
-                <Play className="mr-3 w-5 h-5 text-blue-300 group-hover:scale-110 transition-transform duration-300" />
-                Voir la vidéo
-              </button>
-
-              {/* Secondary CTAs below */}
-              <div className="flex flex-wrap gap-4 justify-center">
-                <a 
-                  href="#contact" 
-                  className="group relative inline-flex items-center px-10 py-4 font-semibold text-white overflow-hidden rounded-full"
-                >
-                  <span className="absolute inset-0 bg-gradient-to-r from-blue-500 to-purple-600 transition-all duration-300 group-hover:scale-110"></span>
-                  <span className="absolute inset-0 bg-gradient-to-r from-blue-600 to-purple-700 opacity-0 group-hover:opacity-100 transition-opacity duration-300"></span>
-                  <span className="relative flex items-center">
-                    Contactez-nous
-                    <ArrowRight className="ml-3 group-hover:translate-x-2 transition-transform duration-300" size={20} />
-                  </span>
-                </a>
-                <button 
-                  onClick={() => navigate('/faq')}
-                  className="group relative inline-flex items-center px-10 py-4 font-semibold border border-slate-700 text-white rounded-full hover:border-slate-600 transition-all duration-300 overflow-hidden"
-                >
-                  <span className="absolute inset-0 bg-gradient-to-r from-slate-800 to-slate-700 opacity-0 group-hover:opacity-100 transition-opacity duration-300"></span>
-                  <span className="relative">En savoir plus</span>
-                </button>
+            <div className="mt-12 flex flex-col items-center gap-6 w-full">
+              <div className="w-full max-w-3xl rounded-3xl border border-slate-700/70 bg-slate-950/40 shadow-2xl p-1">
+              <iframe width="894" height="503" src="https://www.youtube.com/embed/dQw4w9WgXcQ" title="Rick Astley - Never Gonna Give You Up (Official Video) (4K Remaster)" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" referrerpolicy="strict-origin-when-cross-origin" allowfullscreen></iframe>
               </div>
+
+              <button
+                onClick={() => navigate('/login')}
+                className="group relative inline-flex items-center px-10 py-4 font-semibold text-white overflow-hidden rounded-full"
+              >
+                <span className="absolute inset-0 bg-gradient-to-r from-blue-500 to-purple-600 transition-all duration-300 group-hover:scale-110"></span>
+                <span className="absolute inset-0 bg-gradient-to-r from-blue-600 to-purple-700 opacity-0 group-hover:opacity-100 transition-opacity duration-300"></span>
+                <span className="relative flex items-center">
+                  Commencer
+                  <ArrowRight className="ml-3 group-hover:translate-x-2 transition-transform duration-300" size={20} />
+                </span>
+              </button>
             </div>
 
             {/* Stats */}
           </div>
         </div>
       </header>
-
-      {/* Video Modal */}
-      {isVideoOpen && (
-        <div 
-          className="fixed inset-0 z-[60] flex items-center justify-center p-4 bg-slate-950/80 backdrop-blur-sm"
-          onClick={() => setIsVideoOpen(false)}
-        >
-          <div 
-            className="relative w-full max-w-4xl bg-slate-900 rounded-2xl shadow-2xl overflow-hidden border border-slate-700"
-            onClick={(e) => e.stopPropagation()}
-          >
-            <div className="aspect-video w-full bg-black">
-              <iframe
-                width="100%"
-                height="100%"
-                src="https://www.youtube.com/embed/dQw4w9WgXcQ"
-                title="Greffissimo - Présentation vidéo"
-                frameBorder="0"
-                allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
-                allowFullScreen
-              ></iframe>
-            </div>
-            <button
-              onClick={() => setIsVideoOpen(false)}
-              className="absolute top-4 right-4 p-2 rounded-full bg-black/50 text-white hover:bg-black/70 transition-colors"
-              aria-label="Fermer la vidéo"
-            >
-              <X size={18} />
-            </button>
-            <div className="p-4 sm:p-6">
-              <h3 className="text-xl sm:text-2xl font-bold text-white">Découvrez Greffissimo en 90 secondes</h3>
-              <p className="mt-2 text-slate-300/80">Une démonstration rapide de notre service de formalités.</p>
-            </div>
-          </div>
-        </div>
-      )}
 
       {/* Pourquoi Greffissimo ? */}
       <section className="px-6 py-24 relative">
