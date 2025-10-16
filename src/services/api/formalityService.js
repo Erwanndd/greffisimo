@@ -15,6 +15,9 @@ export const createFormalityInDB = async (formalityData, clientIds, user) => {
     }
 
     const insertPayload = { ...formalityData, formalist_id: formalistId, created_by: user.id };
+    if (insertPayload.invoice_entity === '') {
+        insertPayload.invoice_entity = null;
+    }
 
     const { data: formality, error: formalityError } = await supabase
         .from('formalities')

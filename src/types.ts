@@ -21,6 +21,7 @@ export type Database = {
           created_by: string | null
           formalist_id: string | null
           id: number
+          invoice_entity: string | null
           is_urgent: boolean | null
           siren: string | null
           status: string
@@ -35,6 +36,7 @@ export type Database = {
           created_by?: string | null
           formalist_id?: string | null
           id?: never
+          invoice_entity?: string | null
           is_urgent?: boolean | null
           siren?: string | null
           status?: string
@@ -49,6 +51,7 @@ export type Database = {
           created_by?: string | null
           formalist_id?: string | null
           id?: never
+          invoice_entity?: string | null
           is_urgent?: boolean | null
           siren?: string | null
           status?: string

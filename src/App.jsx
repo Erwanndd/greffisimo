@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Menu, X, ArrowRight, Shield, Clock, CheckCircle, Lock, Sparkles, ChevronRight } from 'lucide-react';
+import { Menu, X, ArrowRight, Sparkles, ChevronRight } from 'lucide-react';
 import { Routes, Route, Navigate, useNavigate } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
 import LoginPage from '@/pages/LoginPage';
@@ -14,7 +14,6 @@ import CheckoutCancel from '@/pages/CheckoutCancel';
 const HomePage = () => {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [scrolled, setScrolled] = useState(false);
-  const [activeEngagement, setActiveEngagement] = useState(null);
   const navigate = useNavigate();
   const { isAuthenticated, user } = useAuth();
 
@@ -30,13 +29,11 @@ const HomePage = () => {
     return () => window.removeEventListener('scroll', handleScroll);
   }, []);
 
-  const engagements = [
-    { icon: Shield, text: "Maîtrise totale des procédures et usages des greffes", color: "from-blue-400 to-blue-600" },
-    { icon: CheckCircle, text: "Formalité validée", color: "from-green-400 to-green-600" },
-    { icon: Clock, text: "Formalité urgente", color: "from-orange-400 to-orange-600" },
-    { icon: Lock, text: "Formalité sécurisée", color: "from-purple-400 to-purple-600" },
-    { icon: Clock, text: "Traitement en urgence des dossiers prioritaires", color: "from-red-400 to-red-600" },
-    { icon: Shield, text: "Responsabilité civile professionnelle couvrant l'intégralité de l'intervention", color: "from-indigo-400 to-indigo-600" }
+  const milestones = [
+    { title: "Déposez votre formalité en 3 clics" },
+    { title: "Votre dossier est immédiatement traité par un(e) de nos formalistes professionnel(le)s" },
+    { title: "Ne relancez plus votre formaliste : vous recevez des notifications en temps réel !" },
+    { title: "Ne faites plus l’intermédiaire pour le paiement : nous envoyons le lien et la facture à votre client" }
   ];
 
   return (
@@ -98,12 +95,6 @@ const HomePage = () => {
                 {isAuthenticated ? 'Tableau de bord' : 'Commencer'}
                   <ChevronRight className="ml-2 w-4 h-4 transition-transform duration-300 group-hover:translate-x-1" />
                 </span>
-              </button>
-              <button
-                onClick={() => navigate(isAuthenticated ? getDashboardPath() : '/login')}
-                className="text-sm font-medium text-slate-400 hover:text-white transition-all duration-300 px-4 py-2 rounded-lg hover:bg-white/5"
-              >
-                {isAuthenticated ? 'Tableau de bord' : 'Connexion'}
               </button>
             </div>
             {/* Mobile */}
@@ -251,32 +242,25 @@ const HomePage = () => {
             </h3>
           </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            {engagements.map((item, index) => (
-              <div
-                key={index}
-                className="group relative p-6 rounded-2xl bg-gradient-to-br from-slate-800/50 to-slate-900/50 border border-slate-700/50 hover:border-slate-600/50 transition-all duration-500 hover:scale-105 hover:shadow-2xl cursor-pointer"
-                onMouseEnter={() => setActiveEngagement(index)}
-                onMouseLeave={() => setActiveEngagement(null)}
-              >
-                {/* Glow effect */}
-                <div className={`absolute inset-0 rounded-2xl bg-gradient-to-br ${item.color} opacity-0 group-hover:opacity-10 transition-opacity duration-500`}></div>
-                
-                <div className="relative z-10">
-                  <div className={`w-14 h-14 rounded-xl bg-gradient-to-br ${item.color} flex items-center justify-center mb-4 group-hover:scale-110 transition-transform duration-300`}>
-                    <item.icon className="w-7 h-7 text-white" />
+          <div className="relative max-w-4xl mx-auto">
+            <div className="absolute left-4 sm:left-6 top-0 bottom-0 w-px bg-gradient-to-b from-blue-500/40 via-purple-500/40 to-slate-700/30 pointer-events-none"></div>
+            <div className="space-y-10">
+              {milestones.map((step, index) => (
+                <div key={index} className="relative pl-16 sm:pl-20">
+                  <div className="absolute left-0 sm:left-2 top-1.5 flex items-center justify-center w-10 h-10 rounded-full bg-gradient-to-br from-blue-500 to-purple-500 text-white font-semibold shadow-lg">
+                    {index + 1}
                   </div>
-                  <p className="text-slate-200 font-medium leading-relaxed">
-                    {item.text}
-                  </p>
-                  
-                  {/* Animated corner decoration */}
-                  <div className={`absolute -top-2 -right-2 w-8 h-8 ${activeEngagement === index ? 'opacity-100' : 'opacity-0'} transition-opacity duration-300`}>
-                    <div className={`w-full h-full bg-gradient-to-br ${item.color} rounded-full animate-ping`}></div>
+                  <div className="bg-slate-900/60 border border-slate-700/60 rounded-2xl p-6 shadow-xl backdrop-blur-sm">
+                    <h4 className="text-xl font-semibold text-white">{step.title}</h4>
+                    {step.description && (
+                      <p className="mt-2 text-slate-300 leading-relaxed">
+                        {step.description}
+                      </p>
+                    )}
                   </div>
                 </div>
-              </div>
-            ))}
+              ))}
+            </div>
           </div>
         </div>
       </section>

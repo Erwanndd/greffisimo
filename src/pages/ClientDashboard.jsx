@@ -30,6 +30,7 @@ const ClientDashboard = () => {
     return formalities.filter(formality => {
       const matchesSearch = (formality.company_name || '').toLowerCase().includes(searchTerm.toLowerCase()) ||
                            (formality.siren || '').includes(searchTerm) ||
+                           (formality.invoice_entity || '').toLowerCase().includes(searchTerm.toLowerCase()) ||
                            (formality.type || '').toLowerCase().includes(searchTerm.toLowerCase());
       
       const matchesStatus = statusFilter.length === 0 || statusFilter.includes(formality.status);
@@ -77,7 +78,8 @@ const ClientDashboard = () => {
     status: 'pending_payment',
     is_urgent: false,
     requires_tax_registration: false,
-    tribunal_id: null
+    tribunal_id: null,
+    invoice_entity: ''
   });
   const [selectedColleagueIds, setSelectedColleagueIds] = useState([]);
   const [colleagueEmail, setColleagueEmail] = useState('');
@@ -124,10 +126,11 @@ const ClientDashboard = () => {
       is_urgent: newFormality.is_urgent,
       requires_tax_registration: newFormality.requires_tax_registration,
       tribunal_id: newFormality.tribunal_id ? parseInt(newFormality.tribunal_id) : null,
+      invoice_entity: newFormality.invoice_entity
     };
     await createFormality(payload, clientIds);
 
-    setNewFormality({ company_name: '', siren: '', type: '', status: 'pending_payment', is_urgent: false, requires_tax_registration: false, tribunal_id: null });
+    setNewFormality({ company_name: '', siren: '', type: '', status: 'pending_payment', is_urgent: false, requires_tax_registration: false, tribunal_id: null, invoice_entity: '' });
     setSelectedColleagueIds([]);
     setColleagueEmail('');
     setShowCreateFormality(false);
@@ -258,6 +261,11 @@ const ClientDashboard = () => {
                   </SelectContent>
                 </Select>
 
+                <Input placeholder="Entité à facturrer" value={newFormality.invoice_entity} onChange={(e) => setNewFormality({...newFormality, invoice_entity: e.target.value})} className="bg-white/5 border-white/20 text-white focus:border-blue-500 focus:ring-blue-500" />
+
+
+                
+
                 <div className="flex items-center space-x-2">
                   <Switch
                     id="urgency-switch"
@@ -363,7 +371,7 @@ const ClientDashboard = () => {
 
           <Dialog open={showShareTransfer} onOpenChange={setShowShareTransfer}>
             <DialogTrigger asChild>
-              <Button variant="outline" className="bg-white/5 border-white/20 text-white hover:bg-white/10 transition-all duration-200">
+              <Button className="bg-gradient-to-r from-blue-500 to-purple-500 hover:from-blue-600 hover:to-purple-600 transition-all duration-300 shadow-lg hover:shadow-xl">
                 <FileSignature className="w-4 h-4 mr-2" />
                 Cession de titres
               </Button>
