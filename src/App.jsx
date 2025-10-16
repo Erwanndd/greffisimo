@@ -1,6 +1,5 @@
 import React, { useState, useEffect } from 'react';
 import { Menu, X, ArrowRight, Shield, Clock, CheckCircle, Lock, Sparkles, ChevronRight } from 'lucide-react';
-import { VideoPlayer } from '@/components/ui/video-thumnail-player';
 import { Routes, Route, Navigate, useNavigate } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
 import LoginPage from '@/pages/LoginPage';
@@ -76,38 +75,37 @@ const HomePage = () => {
 
             {/* Desktop links */}
             <div className="hidden md:flex items-center space-x-10">
-              <button 
-                onClick={() => navigate('/')} 
+              <button
+                onClick={() => navigate('/')}
                 className="relative text-slate-300 hover:text-white font-medium transition-all duration-300 group"
               >
                 Accueil
                 <span className="absolute -bottom-1 left-0 w-0 h-0.5 bg-gradient-to-r from-blue-400 to-purple-400 transition-all duration-300 group-hover:w-full"></span>
               </button>
-              <button 
-                onClick={() => navigate('/faq')} 
+              <button
+                onClick={() => navigate('/faq')}
                 className="relative text-slate-300 hover:text-white font-medium transition-all duration-300 group"
               >
                 FAQ
                 <span className="absolute -bottom-1 left-0 w-0 h-0.5 bg-gradient-to-r from-blue-400 to-purple-400 transition-all duration-300 group-hover:w-full"></span>
               </button>
-              <a 
-                href="#contact" 
+              <button
+                onClick={() => navigate(isAuthenticated ? getDashboardPath() : '/login')}
                 className="relative px-8 py-3 font-medium text-white overflow-hidden rounded-full group"
               >
                 <span className="absolute inset-0 bg-gradient-to-r from-blue-500 to-purple-600 transition-transform duration-300 group-hover:scale-110"></span>
                 <span className="relative flex items-center">
-                  Contactez-nous
+                {isAuthenticated ? 'Tableau de bord' : 'Commencer'}
                   <ChevronRight className="ml-2 w-4 h-4 transition-transform duration-300 group-hover:translate-x-1" />
                 </span>
-              </a>
+              </button>
               <button
                 onClick={() => navigate(isAuthenticated ? getDashboardPath() : '/login')}
                 className="text-sm font-medium text-slate-400 hover:text-white transition-all duration-300 px-4 py-2 rounded-lg hover:bg-white/5"
               >
-                {isAuthenticated ? 'Tableau de bord' : 'Commencer'}
+                {isAuthenticated ? 'Tableau de bord' : 'Connexion'}
               </button>
             </div>
-
             {/* Mobile */}
             <button 
               onClick={() => setIsMenuOpen(!isMenuOpen)} 
@@ -135,19 +133,12 @@ const HomePage = () => {
             >
               FAQ
             </button>
-            <a 
-              href="#contact" 
-              onClick={() => setIsMenuOpen(false)} 
+            <button 
+              onClick={() => { setIsMenuOpen(false); navigate(isAuthenticated ? getDashboardPath() : '/login'); }}
               className="block w-full text-left font-medium text-slate-300 hover:text-white py-3 px-4 rounded-lg hover:bg-white/5 transition-all duration-300"
             >
-              Contactez-nous
-            </a>
-            <button
-              onClick={() => { setIsMenuOpen(false); navigate(isAuthenticated ? getDashboardPath() : '/login'); }}
-              className="block w-full text-left font-medium text-slate-400 hover:text-white py-3 px-4 rounded-lg hover:bg-white/5 transition-all duration-300 border-t border-slate-800 pt-4"
-            >
-              {isAuthenticated ? 'Tableau de bord' : 'Connexion'}
-            </button>
+              {isAuthenticated ? 'Tableau de bord' : 'Commencer'}
+              </button>
           </div>
         </div>
       </nav>
@@ -185,8 +176,18 @@ const HomePage = () => {
             </h1>
 
             <div className="mt-12 flex flex-col items-center gap-6 w-full">
-              <div className="w-full max-w-3xl rounded-3xl border border-slate-700/70 bg-slate-950/40 shadow-2xl p-1">
-              <iframe width="894" height="503" src="https://www.youtube.com/embed/dQw4w9WgXcQ" title="Rick Astley - Never Gonna Give You Up (Official Video) (4K Remaster)" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" referrerpolicy="strict-origin-when-cross-origin" allowfullscreen></iframe>
+              <div className="w-full max-w-3xl rounded-3xl overflow-hidden border border-slate-700/70 bg-slate-950/40 shadow-2xl">
+                <div className="aspect-video w-full bg-black">
+                  <iframe
+                    width="100%"
+                    height="100%"
+                    src="https://www.youtube.com/embed/dQw4w9WgXcQ"
+                    title="Greffissimo - Présentation vidéo"
+                    frameBorder="0"
+                    allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
+                    allowFullScreen
+                  ></iframe>
+                </div>
               </div>
 
               <button
@@ -280,64 +281,8 @@ const HomePage = () => {
         </div>
       </section>
 
-      {/* CTA */}
-      <section className="px-6 py-24 relative overflow-hidden">
-        {/* Animated background */}
-        <div className="absolute inset-0 -z-10">
-          <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[800px] h-[800px] bg-gradient-to-r from-blue-500/10 to-purple-500/10 rounded-full blur-3xl animate-pulse"></div>
-        </div>
-        
-        <div className="max-w-7xl mx-auto text-center relative">
-          <div className="inline-flex items-center px-3 py-1 rounded-full bg-green-500/10 border border-green-500/20 mb-8">
-            <span className="text-xs font-medium text-green-400">Démarrez maintenant</span>
-          </div>
-          
-          <h2 className="text-4xl md:text-5xl font-bold mb-12">
-            <span className="text-white">Prêt à lancer votre</span>{" "}
-            <span className="bg-gradient-to-r from-blue-400 to-purple-400 bg-clip-text text-transparent">
-              formalité ?
-            </span>
-          </h2>
-          
-          <a 
-            href="#contact" 
-            className="group relative inline-flex items-center px-12 py-5 font-semibold text-lg text-white overflow-hidden rounded-full"
-          >
-            <span className="absolute inset-0 bg-gradient-to-r from-blue-500 via-purple-500 to-blue-500 animate-gradient bg-300 transition-all duration-300 group-hover:scale-110"></span>
-            <span className="relative flex items-center">
-              Contactez-nous
-              <ArrowRight className="ml-3 group-hover:translate-x-2 transition-transform duration-300" size={24} />
-            </span>
-          </a>
-        </div>
-      </section>
-
-      {/* Contact / Footer Top */}
-      <section id="contact" className="px-6 py-20 bg-gradient-to-b from-slate-950 to-slate-900">
-        <div className="max-w-7xl mx-auto">
-          <div className="relative bg-gradient-to-br from-slate-800/50 to-slate-900/50 rounded-3xl p-12 border border-slate-700/50 overflow-hidden">
-            {/* Decorative elements */}
-            <div className="absolute top-0 right-0 w-64 h-64 bg-gradient-to-br from-blue-500/10 to-purple-500/10 rounded-full blur-3xl"></div>
-            <div className="absolute bottom-0 left-0 w-64 h-64 bg-gradient-to-tr from-purple-500/10 to-indigo-500/10 rounded-full blur-3xl"></div>
-            
-            <div className="relative z-10">
-              <p className="font-bold text-2xl mb-3 bg-gradient-to-r from-blue-400 to-purple-400 bg-clip-text text-transparent">
-                Simplifiez vos formalités juridiques avec Greffissimo.
-              </p>
-              <p className="font-semibold text-lg text-slate-300 mb-6">Contact</p>
-              <a 
-                href="mailto:contact@greffissimo.fr" 
-                className="inline-flex items-center text-lg text-blue-400 hover:text-blue-300 transition-colors duration-300 group"
-              >
-                <span className="underline decoration-blue-400/30 hover:decoration-blue-400/60 transition-all duration-300">
-                  contact@greffissimo.fr
-                </span>
-                <ChevronRight className="ml-2 w-4 h-4 group-hover:translate-x-1 transition-transform duration-300" />
-              </a>
-            </div>
-          </div>
-        </div>
-      </section>
+     
+     
 
       {/* Footer */}
       <footer className="border-t border-slate-800 px-6 py-16 bg-slate-900">

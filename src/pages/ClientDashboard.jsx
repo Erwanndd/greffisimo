@@ -351,7 +351,7 @@ const ClientDashboard = () => {
                       </div>
                     </div>
                   )}
-                  <p className="text-xs text-gray-400">Vous êtes automatiquement ajouté comme client.</p>
+                  <p className="text-xs text-gray-400">Vous êtes automatiquement ajouté comme participant.</p>
                 </div>
               </div>
               <DialogFooter>

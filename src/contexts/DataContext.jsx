@@ -160,7 +160,7 @@ export const DataProvider = ({ children }) => {
         const updatedClients = (f.clients || []).filter(c => c && c.id !== clientId);
         return { ...f, clients: updatedClients, last_updated_at: new Date().toISOString() };
       }).sort((a, b) => new Date(b.last_updated_at || 0) - new Date(a.last_updated_at || 0)));
-      toast({ title: 'Client supprimé', description: `Le client a été retiré du dossier.` });
+      toast({ title: 'Participant supprimé', description: `Le participant a été retiré du dossier.` });
     } catch (error) {
       console.error('Error removing client:', error);
       toast({ title: 'Erreur', description: error.message, variant: 'destructive' });
