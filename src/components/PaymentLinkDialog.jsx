@@ -34,6 +34,7 @@ const PaymentLinkDialog = ({ open, onOpenChange, formality, defaultEmail, onEmai
           Boolean(formality.is_urgent),
           Boolean(formality.requires_tax_registration)
         );
+        console.log('[PaymentLinkDialog] prices', prices);
         if (active) setPriceBreakdown(prices);
       } catch (err) {
         console.error('Erreur lors du calcul du tarif:', err);

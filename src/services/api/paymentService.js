@@ -93,6 +93,8 @@ export const computeFormalityPrices = async (formalityType, isUrgent, requiresTa
     .select('price_id,amount,name')
     .in('name', names);
 
+  console.log('[computeFormalityPrices] tariffs', data);
+
   handleSupabaseError({ error, customMessage: 'computing formality amount' });
 
   let basePrice = 0, urgencyPrice = 0, taxRegPrice = 0;
@@ -100,7 +102,7 @@ export const computeFormalityPrices = async (formalityType, isUrgent, requiresTa
 
   if (Array.isArray(data)) {
     for (const row of data) {
-      if (row.name === formalityType) {
+      if (row.name === formalityName) {
         basePrice = row.amount || 0;
         basePriceId = row.price_id || null;
       } else if (row.name === 'Option: Urgence') {

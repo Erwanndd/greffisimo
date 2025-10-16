@@ -20,3 +20,5 @@ export const formalityTypes = [
   "Convention d'animation",
 ];
 
+
+
