@@ -166,21 +166,26 @@ const HomePage = () => {
               </span>
             </h1>
 
-            <div className="mt-12 flex flex-col items-center gap-6 w-full">
-              <div className="w-full max-w-3xl rounded-3xl overflow-hidden border border-slate-700/70 bg-slate-950/40 shadow-2xl">
-                <div className="aspect-video w-full bg-black">
-                  <video
-                    className="w-full h-full"
-                    controls
-                    autoplay
-                    muted
-                    loop
-                  >
-                    <source src="/public/videos/greffissimo-course.mp4" type="video/mp4" type="video/mp4" />
-                  </video>
-                </div>
+            return (
+              <div className="mt-12 flex flex-col items-center gap-6 w-full">
+                <header className="w-full max-w-3xl rounded-3xl overflow-hidden border border-slate-700/70 bg-slate-950/40 shadow-2xl">
+                  <div className="aspect-video w-full bg-black relative">
+                    <video
+                      className="absolute inset-0 w-full h-full object-cover"
+                      controls
+                      muted
+                      autoPlay
+                      loop
+                      playsInline
+                      preload="metadata"
+                    >
+                      <source src={`${process.env.PUBLIC_URL}/videos/greffissimo-course.mp4`} type="video/mp4" />
+                      Ton navigateur ne supporte pas la vidéo.
+                    </video>
+                  </div>
+                </header>
               </div>
-            </div>
+            );
 
               <button
                 onClick={() => navigate('/login')}
