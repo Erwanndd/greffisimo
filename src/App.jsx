@@ -169,7 +169,7 @@ const HomePage = () => {
             <div className="mt-12 flex flex-col items-center gap-6 w-full">
               <div className="w-full max-w-3xl rounded-3xl overflow-hidden border border-slate-700/70 bg-slate-950/40 shadow-2xl">
                 <div className="aspect-video w-full bg-black">
-                  <iframe
+                  <video
                     width="100%"
                     height="100%"
                     src="videos/greffissimo-course.mp4"
@@ -177,7 +177,7 @@ const HomePage = () => {
                     frameBorder="0"
                     allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
                     allowFullScreen
-                  ></iframe>
+                  ></video>
                 </div>
               </div>
 
