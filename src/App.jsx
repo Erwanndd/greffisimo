@@ -203,7 +203,6 @@ const HomePage = () => {
 
             {/* Stats */}
           </div>
-        </div>
       </header>
 
       {/* Pourquoi Greffissimo ? */}
