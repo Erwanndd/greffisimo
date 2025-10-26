@@ -167,7 +167,7 @@ const HomePage = () => {
             </h1>
 
             return (
-              <div className="mt-12 flex flex-col items-center gap-6 w-full">
+              <div className="max-w-7xl mx-auto">
                 <header className="w-full max-w-3xl rounded-3xl overflow-hidden border border-slate-700/70 bg-slate-950/40 shadow-2xl">
                   <div className="aspect-video w-full bg-black relative">
                     <video
@@ -179,7 +179,10 @@ const HomePage = () => {
                       playsInline
                       preload="metadata"
                     >
-                      <source src={`${process.env.PUBLIC_URL}/videos/greffissimo-course.mp4`} type="video/mp4" />
+                      <source
+                        src={`${process.env.PUBLIC_URL}/videos/greffissimo-course.mp4`}
+                        type="video/mp4"
+                      />
                       Ton navigateur ne supporte pas la vidéo.
                     </video>
                   </div>
