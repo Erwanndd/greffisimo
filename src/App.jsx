@@ -176,7 +176,7 @@ const HomePage = () => {
                     muted
                     loop
                   >
-                    <source src="/videos/greffissimo-course.mp4" type="video/mp4" type="video/mp4" />
+                    <source src="/public/videos/greffissimo-course.mp4" type="video/mp4" type="video/mp4" />
                   </video>
                 </div>
               </div>
