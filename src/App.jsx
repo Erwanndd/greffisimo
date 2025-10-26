@@ -172,7 +172,7 @@ const HomePage = () => {
                   <iframe
                     width="100%"
                     height="100%"
-                    src="https://youtu.be/PXt2B7Nn-CE"
+                    src="https://www.youtube.com/embed/PXt2B7Nn-CE?si=Bw0Aji3Ny8JnZppJ"
                     title="Greffissimo - Présentation vidéo"
                     frameBorder="0"
                     allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
