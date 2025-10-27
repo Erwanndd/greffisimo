@@ -82,7 +82,7 @@ export const computeFormalityPrices = async (formalityType, isUrgent, requiresTa
     formalityName = formalityType;
   }
   else {
-    formalityName = "Formalité simple";
+    formalityName = "Autre formalité";
   }
   const names = [formalityName];
   if (isUrgent) names.push('Option: Urgence');
